@@ -115,15 +115,15 @@ Resources:
       #IamInstanceProfile: !Ref rEC2InstanceProfileSFG
 
       NetworkInterfaces:
-      - AssociatePublicIpAddress: "true"
-        PrivateIpAddress: '192.168.3.250'
+        - AssociatePublicIpAddress: "true"
+        #PrivateIpAddress: 192.168.3.250/32
         SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet1]  # >> Pilas Subnet 1
         DeviceIndex: '0'
         Description: 'Primary network interface'
 
       Tags:
         - Key: Name
-          Value: !Join ["", [!Ref 'pImportBase',"-sfg-nodo1"]]
+          Value: !Join ["", [!Ref 'pImportBase',"-sfg-nodo1-priv"]]
         
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
@@ -133,10 +133,10 @@ Resources:
       # 
       # Nombre de la maquina
 
- # Instancia Sterling Nodo2
+# Instancia Sterling Nodo2
   rEc2PSNodo1:
     Type: AWS::EC2::Instance
-   # Condition: envNoDev  # >> depende del ambiente
+  # Condition: envNoDev  # >> depende del ambiente
     Properties:
       DisableApiTermination: !FindInMap [mSterling, !Ref pEnvironment, DisableApiTermination]
       SecurityGroupIds:
@@ -148,15 +148,15 @@ Resources:
       # IamInstanceProfile: !Ref rEC2InstanceProfileSFG
       
       NetworkInterfaces:
-      - AssociatePublicIpAddress: "true"
-        PrivateIpAddress: '192.168.3.250'
+        - AssociatePublicIpAddress: "true"
+        #PrivateIpAddress: 192.168.3.250/32
         SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet2]  # >> Pilas Subnet 2
         DeviceIndex: '0'
         Description: 'Primary network interface'
       
       Tags:
         - Key: Name
-          Value: !Join ["", [!Ref 'pImportBase',"-ps-nodo1"]]
+          Value: !Join ["", [!Ref 'pImportBase',"-ps-nodo1-pub"]]
         
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
@@ -164,4 +164,4 @@ Resources:
             VolumeSize: !FindInMap [mSterling, !Ref pEnvironment, EbsVolumeSize]
       #UserData:
       # 
-      # Nombre de la maquina 
+      # Nombre de la maquina h
