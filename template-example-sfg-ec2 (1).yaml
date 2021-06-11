@@ -1,0 +1,151 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Creacion Ec2 para servicio sanbox
+
+############################## Parameters ####################################################
+
+Parameters:
+  pEnvironment:
+    Type: String
+    AllowedValues:
+      - dev
+      - qa
+      - pdn
+    Description: Enter environment dev, qa, pdn.
+    Default: dev
+  
+  pImportBase:
+    Description: The base name of the imported objetcs
+    Type: String
+    Default: aw1205001-servicio-mft
+
+
+  # pPassphrase:
+  #   Description: passphrase
+  #   Type: String
+  #   NoEcho: true
+  # pUserDG:
+  #   Description: user DG
+  #   Type: String
+  #   NoEcho: true
+
+  # pSFTPPort:
+  #   Type: Number
+  #   Description: Puerto servicio SFTP.
+  #   Default: 10026
+  # pFTPSPort:
+  #   Type: Number
+  #   Description: Puerto servicio SFTP.
+  #   Default: 8032
+  # pCDPort:
+  #   Type: Number
+  #   Description: Puerto servicio SFTP.
+  #   Default: 1364
+
+
+############################## Mappings ####################################################
+Mappings:
+  mSterling:
+    dev: 
+      InstanceType: "t3a.large"          
+      ImageId: "ami-0b0af3577fe5e3532" #Red Hat Enterprise Linux 8 
+      EbsVolumeSize: 50
+      EbsVolumeSize2: 50
+      DisableApiTermination: "false"
+      Subnet1: "subnet-026692b4101281cd8" #mft-private-A 2
+      Subnet2: "subnet-03537d0e8b9cfae20" #mft-public-A 1
+      Subnet3: AWS::NoValue
+      # NlbCidrIp1: 10.104.28.0/24 # segmento Subred donde se desplegará el Nlb
+      # NlbCidrIp2: AWS::NoValue
+      # NlbCidrIp3: AWS::NoValue
+      # NlbSFTPPort: 10026
+      # NlbFTPSPort: 8032
+      # NlbCDPort: 1364
+      # RdsCidrIp1: 10.104.31.0/25
+      # RdsCidrIp2: AWS::NoValue
+      # Deploymentgroupname: "AW1205001_Sterling_ComponentesComunes"
+      # DeploymentgroupPath: "/azagent" 
+    qa: 
+      InstanceType: "t3a.large"          
+      ImageId: "ami-0b0af3577fe5e3532" #Red Hat Enterprise Linux 8 
+      EbsVolumeSize: 50
+      EbsVolumeSize2: 50
+      DisableApiTermination: "false"
+      Subnet1: "subnet-026692b4101281cd8" #mft-private-A 2
+      Subnet2: "subnet-03537d0e8b9cfae20" #mft-public-A 1
+      Subnet3: AWS::NoValue    
+      
+
+############################## Conditions ####################################################
+Conditions:  
+  envNoDev: !Not [ !Equals [Ref: pEnvironment, "dev"]] 
+  
+
+############################## Resources ####################################################
+Resources:
+
+############################## SG Sterling ####################################################
+
+  rSecurityGroupEc2SFG: 
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Join ["",[!Ref 'AWS::StackName', "-intance-public-A-sg"]] 
+      GroupDescription: security group para el EC2
+      SecurityGroupIngress:  
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+          Description: Allow access to the EC2 APP from CiberArk1        
+      VpcId: vpc-070ca66092c150cc0   
+      Tags:
+        - Key: Name
+          Value: !Join ["",[!Ref 'AWS::StackName', "-pruebaTag-sfg-sg"]]
+# Instancia Sterling Nodo1 
+  rEc2SterlingNodo1:
+    Type: AWS::EC2::Instance
+    Properties:
+      DisableApiTermination: !FindInMap [mSterling, !Ref pEnvironment, DisableApiTermination]
+      SecurityGroupIds:
+        - !Ref rSecurityGroupEc2SFG
+      SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet1]  # >> Pilas Subnet 1
+      Monitoring: True
+      InstanceType: !FindInMap [mSterling, !Ref pEnvironment, InstanceType]
+      ImageId: !FindInMap [mSterling, !Ref pEnvironment, ImageId]
+      #IamInstanceProfile: !Ref rEC2InstanceProfileSFG
+      Tags:
+        - Key: Name
+          Value: !Join ["", [!Ref 'pImportBase',"-sfg-nodo1"]]
+        
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: !FindInMap [mSterling, !Ref pEnvironment, EbsVolumeSize]
+      #UserData:
+      # 
+      # Nombre de la maquina
+
+ # Instancia Sterling Nodo2
+  rEc2PSNodo1:
+    Type: AWS::EC2::Instance
+    Condition: envNoDev  # >> depende del ambiente
+    Properties:
+      DisableApiTermination: !FindInMap [mSterling, !Ref pEnvironment, DisableApiTermination]
+      SecurityGroupIds:
+        - !Ref rSecurityGroupEc2SFG
+      SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet2]  # >> Pilas Subnet 2
+      Monitoring: True
+      InstanceType: !FindInMap [mSterling, !Ref pEnvironment, InstanceType]
+      ImageId: !FindInMap [mSterling, !Ref pEnvironment, ImageId]
+      # IamInstanceProfile: !Ref rEC2InstanceProfileSFG
+      Tags:
+        - Key: Name
+          Value: !Join ["", [!Ref 'pImportBase',"-ps-nodo1"]]
+        
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: !FindInMap [mSterling, !Ref pEnvironment, EbsVolumeSize]
+      #UserData:
+      # 
+      # Nombre de la maquina
+
