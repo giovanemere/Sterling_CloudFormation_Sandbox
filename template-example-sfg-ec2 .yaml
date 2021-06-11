@@ -46,14 +46,15 @@ Parameters:
 Mappings:
   mSterling:
     dev: 
-      InstanceType: "t3a.large"          
+      InstanceType: "t2.micro"          
       ImageId: "ami-0b0af3577fe5e3532" #Red Hat Enterprise Linux 8 
-      EbsVolumeSize: 50
-      EbsVolumeSize2: 50
+      EbsVolumeSize: 10
+      EbsVolumeSize2: 10
       DisableApiTermination: "false"
-      Subnet1: "subnet-026692b4101281cd8" #mft-private-A 2
-      Subnet2: "subnet-03537d0e8b9cfae20" #mft-public-A 1
-      Subnet3: AWS::NoValue
+      Subnet1: "subnet-03537d0e8b9cfae20" #mft-public-A 1
+      Subnet2: "subnet-0f2f5b594e51d0623" #mft-public-B 1
+      Subnet3: "subnet-026692b4101281cd8" #mft-private-A 2
+      Subnet4: "subnet-0f2f5b594e51d0623" #mft-private-B 2
       # NlbCidrIp1: 10.104.28.0/24 # segmento Subred donde se desplegará el Nlb
       # NlbCidrIp2: AWS::NoValue
       # NlbCidrIp3: AWS::NoValue
@@ -65,14 +66,15 @@ Mappings:
       # Deploymentgroupname: "AW1205001_Sterling_ComponentesComunes"
       # DeploymentgroupPath: "/azagent" 
     qa: 
-      InstanceType: "t3a.large"          
+      InstanceType: "t2.micro"          
       ImageId: "ami-0b0af3577fe5e3532" #Red Hat Enterprise Linux 8 
-      EbsVolumeSize: 50
-      EbsVolumeSize2: 50
+      EbsVolumeSize: 10
+      EbsVolumeSize2: 10
       DisableApiTermination: "false"
-      Subnet1: "subnet-026692b4101281cd8" #mft-private-A 2
-      Subnet2: "subnet-03537d0e8b9cfae20" #mft-public-A 1
-      Subnet3: AWS::NoValue    
+      Subnet1: "subnet-03537d0e8b9cfae20" #mft-public-A 1
+      Subnet2: "subnet-0f2f5b594e51d0623" #mft-public-B 1
+      Subnet3: "subnet-026692b4101281cd8" #mft-private-A 2
+      Subnet4: "subnet-0f2f5b594e51d0623" #mft-private-B 2   
       
 
 ############################## Conditions ####################################################
@@ -106,12 +108,19 @@ Resources:
     Properties:
       DisableApiTermination: !FindInMap [mSterling, !Ref pEnvironment, DisableApiTermination]
       SecurityGroupIds:
-        - !Ref rSecurityGroupEc2SFG
-      SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet1]  # >> Pilas Subnet 1
+        - !Ref rSecurityGroupEc2SFG      
       Monitoring: True
       InstanceType: !FindInMap [mSterling, !Ref pEnvironment, InstanceType]
       ImageId: !FindInMap [mSterling, !Ref pEnvironment, ImageId]
       #IamInstanceProfile: !Ref rEC2InstanceProfileSFG
+
+      NetworkInterfaces:
+      - AssociatePublicIpAddress: "true"
+        PrivateIpAddress: '192.168.3.250'
+        SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet1]  # >> Pilas Subnet 1
+        DeviceIndex: '0'
+        Description: 'Primary network interface'
+
       Tags:
         - Key: Name
           Value: !Join ["", [!Ref 'pImportBase',"-sfg-nodo1"]]
@@ -127,16 +136,24 @@ Resources:
  # Instancia Sterling Nodo2
   rEc2PSNodo1:
     Type: AWS::EC2::Instance
-    Condition: envNoDev  # >> depende del ambiente
+   # Condition: envNoDev  # >> depende del ambiente
     Properties:
       DisableApiTermination: !FindInMap [mSterling, !Ref pEnvironment, DisableApiTermination]
       SecurityGroupIds:
         - !Ref rSecurityGroupEc2SFG
-      SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet2]  # >> Pilas Subnet 2
+      
       Monitoring: True
       InstanceType: !FindInMap [mSterling, !Ref pEnvironment, InstanceType]
       ImageId: !FindInMap [mSterling, !Ref pEnvironment, ImageId]
       # IamInstanceProfile: !Ref rEC2InstanceProfileSFG
+      
+      NetworkInterfaces:
+      - AssociatePublicIpAddress: "true"
+        PrivateIpAddress: '192.168.3.250'
+        SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet2]  # >> Pilas Subnet 2
+        DeviceIndex: '0'
+        Description: 'Primary network interface'
+      
       Tags:
         - Key: Name
           Value: !Join ["", [!Ref 'pImportBase',"-ps-nodo1"]]
@@ -147,5 +164,4 @@ Resources:
             VolumeSize: !FindInMap [mSterling, !Ref pEnvironment, EbsVolumeSize]
       #UserData:
       # 
-      # Nombre de la maquina
-
+      # Nombre de la maquina 
