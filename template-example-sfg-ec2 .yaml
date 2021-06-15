@@ -18,6 +18,9 @@ Parameters:
     Type: String
     Default: aw1205001-servicio-mft
 
+  myKeyPair: 
+    Description: Amazon EC2 Key Pair
+    Type: "AWS::EC2::KeyPair::Modernizacion"
 
   # pPassphrase:
   #   Description: passphrase
@@ -102,24 +105,19 @@ Resources:
       Tags:
         - Key: Name
           Value: !Join ["",[!Ref 'AWS::StackName', "-pruebaTag-sfg-sg"]]
+
 # Instancia Sterling Nodo1 
   rEc2SterlingNodo1:
     Type: AWS::EC2::Instance
     Properties:
       DisableApiTermination: !FindInMap [mSterling, !Ref pEnvironment, DisableApiTermination]
       SecurityGroupIds:
-        - !Ref rSecurityGroupEc2SFG      
+        - !Ref rSecurityGroupEc2SFG     
+      SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet3]  # >> Pilas Subnet 1 
+
       Monitoring: True
       InstanceType: !FindInMap [mSterling, !Ref pEnvironment, InstanceType]
       ImageId: !FindInMap [mSterling, !Ref pEnvironment, ImageId]
-      #IamInstanceProfile: !Ref rEC2InstanceProfileSFG
-
-      NetworkInterfaces:
-        - AssociatePublicIpAddress: "true"
-        #PrivateIpAddress: 192.168.3.250/32
-        SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet1]  # >> Pilas Subnet 1
-        DeviceIndex: '0'
-        Description: 'Primary network interface'
 
       Tags:
         - Key: Name
@@ -141,19 +139,14 @@ Resources:
       DisableApiTermination: !FindInMap [mSterling, !Ref pEnvironment, DisableApiTermination]
       SecurityGroupIds:
         - !Ref rSecurityGroupEc2SFG
-      
+      SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet1]  # >> Pilas Subnet 1
+    
       Monitoring: True
       InstanceType: !FindInMap [mSterling, !Ref pEnvironment, InstanceType]
       ImageId: !FindInMap [mSterling, !Ref pEnvironment, ImageId]
       # IamInstanceProfile: !Ref rEC2InstanceProfileSFG
       
-      NetworkInterfaces:
-        - AssociatePublicIpAddress: "true"
-        #PrivateIpAddress: 192.168.3.250/32
-        SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet2]  # >> Pilas Subnet 2
-        DeviceIndex: '0'
-        Description: 'Primary network interface'
-      
+    
       Tags:
         - Key: Name
           Value: !Join ["", [!Ref 'pImportBase',"-ps-nodo1-pub"]]
