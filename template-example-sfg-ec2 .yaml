@@ -79,7 +79,30 @@ Mappings:
       Subnet2: "subnet-0f2f5b594e51d0623" #mft-public-B 1
       Subnet3: "subnet-026692b4101281cd8" #mft-private-A 2
       Subnet4: "subnet-0f2f5b594e51d0623" #mft-private-B 2   
-      
+
+  oracle:
+    dev: 
+      BackupRetentionPeriod: 8
+      Engine: "oracle-ee"
+      EngineVersion: "19.0.0.0.ru-2021-01.rur-2021-01.r2"
+      instanceClass: "db.m5.large"
+      MultiAZ: false              
+      port: "1433"
+      PreferredMaintenanceWindow: Sun:07:00-Sun:09:00
+      PreferredBackupWindow: "05:00-06:00"
+      Daticaluser: "CNXDATID"
+      EnableCloudwatchLogsExports:
+        - trace
+        - audit
+        - alert
+        - listener
+      allocatedStorage: 100
+      maxAllocatedStorage: 300 
+      storageType: "gp2"
+      # AWSKeyManagementServicePowerUser: 
+      #   - arn:aws:iam::aws:policy/AWSKeyManagementServicePowerUser
+      #   - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
+      DBName: MFTDDB
 
 ############################## Conditions ####################################################
 Conditions:  
@@ -102,13 +125,15 @@ Resources:
       GroupName: !Join ["",[!Ref 'AWS::StackName', "-public-sg"]] 
       GroupDescription: security group para el EC2
       SecurityGroupIngress:  
-        - IpProtocol: -1
+        - IpProtocol: "-1"
           CidrIp: 0.0.0.0/0
           Description: Allow access to the EC2 APP from Public
       VpcId: vpc-070ca66092c150cc0   
       Tags:
         - Key: Name
           Value: !Join ["",[!Ref 'AWS::StackName', "-public-sg"]]
+
+  
 
 ####################################   EC2      ####################################################
 # Instancia Perimeter
@@ -141,7 +166,7 @@ Resources:
 #####################################################################################
 ## Segmento Privado
 #####################################################################################
-
+  
   rSecurityGroupEc2Private: 
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -152,13 +177,33 @@ Resources:
           FromPort: 22
           ToPort: 22
           CidrIp: 0.0.0.0/0
-          Description: Allow access to the EC2 APP from Subnet Private   
+          Description: Allow access to the EC2 APP from Subnet Private
+        - IpProtocol: tcp
+          FromPort: 1433
+          ToPort: 1433
+          CidrIp: 0.0.0.0/0
+          Description: Allow access to the RDS APP from Subnet Private  
       VpcId: vpc-070ca66092c150cc0   
       Tags:
         - Key: Name
           Value: !Join ["",[!Ref 'AWS::StackName', "-private-sg"]]
+####SG subnet RDS ################
+  rSubnetGroupRDS:
+      Type: AWS::RDS::DBSubnetGroup
+      Properties:
+        DBSubnetGroupDescription: 
+          Fn::Join: ["-", [Ref: 'AWS::StackName' , "subnetgroup"]]
+        DBSubnetGroupName: 
+          Fn::Join: ["-", [Ref: 'AWS::StackName' , "subnetgroup"]]
+        SubnetIds:
+          - subnet-010e7f6e238fce8be #Subnet PDN
+        Tags:
+          - Key: Name
+            Value: 
+              Fn::Join: ["-", [Ref: 'AWS::StackName' , "subnetgroup"]]
+              
 
-# Instancia Sterling Nodo1 
+  # Instancia Sterling Nodo1 
   rEc2SterlingNodo1:
     Type: AWS::EC2::Instance
     Properties:
