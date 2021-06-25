@@ -16,12 +16,12 @@ Parameters:
   pImportBase:
     Description: The base name of the imported objetcs
     Type: String
-    Default: aw1205001-servicio-mft
+    Default: aw1205001-modernizacion-mft
 
   myKeyPair: 
     Description: Amazon EC2 Key Pair
     Type: "AWS::EC2::KeyPair::KeyName"
-    
+
 
   # pPassphrase:
   #   Description: passphrase
@@ -89,23 +89,74 @@ Conditions:
 ############################## Resources ####################################################
 Resources:
 
-############################## SG Sterling ####################################################
+############################################################################################################
+# Segmento Publico
+############################################################################################################
 
-  rSecurityGroupEc2SFG: 
+
+####################################   Security Groups  ####################################################
+
+  rSecurityGroupEc2Public: 
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: !Join ["",[!Ref 'AWS::StackName', "-intance-public-A-sg"]] 
+      GroupName: !Join ["",[!Ref 'AWS::StackName', "-public-sg"]] 
+      GroupDescription: security group para el EC2
+      SecurityGroupIngress:  
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+          Description: Allow access to the EC2 APP from Public
+      VpcId: vpc-070ca66092c150cc0   
+      Tags:
+        - Key: Name
+          Value: !Join ["",[!Ref 'AWS::StackName', "-public-sg"]]
+
+####################################   EC2      ####################################################
+# Instancia Perimeter
+####################################################################################################
+
+  rEc2PSNodo1:
+    Type: AWS::EC2::Instance
+  # Condition: envNoDev  # >> depende del ambiente
+    Properties:
+      DisableApiTermination: !FindInMap [mSterling, !Ref pEnvironment, DisableApiTermination]
+      SecurityGroupIds:
+        - !Ref rSecurityGroupEc2Public
+      SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet1]  # >> Pilas Subnet 1
+      Monitoring: True
+      InstanceType: !FindInMap [mSterling, !Ref pEnvironment, InstanceType]
+      ImageId: !FindInMap [mSterling, !Ref pEnvironment, ImageId]
+      # IamInstanceProfile: !Ref rEC2InstanceProfileSFG
+      Tags:
+        - Key: Name
+          Value: !Join ["", [!Ref 'pImportBase',"-ps-nodo1-ec2"]]   
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: !FindInMap [mSterling, !Ref pEnvironment, EbsVolumeSize]
+      KeyName: !Ref myKeyPair
+      #UserData:
+      # 
+      # Nombre de la maquina h
+
+#####################################################################################
+## Segmento Privado
+#####################################################################################
+
+  rSecurityGroupEc2Private: 
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Join ["",[!Ref 'AWS::StackName', "-private-sg"]] 
       GroupDescription: security group para el EC2
       SecurityGroupIngress:  
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
           CidrIp: 0.0.0.0/0
-          Description: Allow access to the EC2 APP from CiberArk1        
+          Description: Allow access to the EC2 APP from Subnet Private   
       VpcId: vpc-070ca66092c150cc0   
       Tags:
         - Key: Name
-          Value: !Join ["",[!Ref 'AWS::StackName', "-pruebaTag-sfg-sg"]]
+          Value: !Join ["",[!Ref 'AWS::StackName', "-private-sg"]]
 
 # Instancia Sterling Nodo1 
   rEc2SterlingNodo1:
@@ -113,49 +164,19 @@ Resources:
     Properties:
       DisableApiTermination: !FindInMap [mSterling, !Ref pEnvironment, DisableApiTermination]
       SecurityGroupIds:
-        - !Ref rSecurityGroupEc2SFG     
+        - !Ref rSecurityGroupEc2Private     
       SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet3]  # >> Pilas Subnet 1 
-
       Monitoring: True
       InstanceType: !FindInMap [mSterling, !Ref pEnvironment, InstanceType]
       ImageId: !FindInMap [mSterling, !Ref pEnvironment, ImageId]
-
       Tags:
         - Key: Name
-          Value: !Join ["", [!Ref 'pImportBase',"-sfg-nodo1-priv"]]
-        
+          Value: !Join ["", [!Ref 'pImportBase',"-sfg-nodo1-ec2"]]  
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
             VolumeSize: !FindInMap [mSterling, !Ref pEnvironment, EbsVolumeSize]
+      KeyName: !Ref myKeyPair
       #UserData:
       # 
       # Nombre de la maquina
-
-# Instancia Sterling Nodo2
-  rEc2PSNodo1:
-    Type: AWS::EC2::Instance
-  # Condition: envNoDev  # >> depende del ambiente
-    Properties:
-      DisableApiTermination: !FindInMap [mSterling, !Ref pEnvironment, DisableApiTermination]
-      SecurityGroupIds:
-        - !Ref rSecurityGroupEc2SFG
-      SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet1]  # >> Pilas Subnet 1
-    
-      Monitoring: True
-      InstanceType: !FindInMap [mSterling, !Ref pEnvironment, InstanceType]
-      ImageId: !FindInMap [mSterling, !Ref pEnvironment, ImageId]
-      # IamInstanceProfile: !Ref rEC2InstanceProfileSFG
-      
-    
-      Tags:
-        - Key: Name
-          Value: !Join ["", [!Ref 'pImportBase',"-ps-nodo1-pub"]]
-        
-      BlockDeviceMappings:
-        - DeviceName: /dev/sda1
-          Ebs:
-            VolumeSize: !FindInMap [mSterling, !Ref pEnvironment, EbsVolumeSize]
-      #UserData:
-      # 
-      # Nombre de la maquina h
