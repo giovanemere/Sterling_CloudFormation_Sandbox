@@ -27,6 +27,12 @@ Parameters:
       Description: The VPC Default Project
       Type: String
       Default: vpc-070ca66092c150cc0
+  
+  # Subnets
+    Subnets:
+      Description: he list of SubnetIds, for at least two Availability Zones in the region in your Virtual Private Cloud (VPC)
+      Type: CommaDelimitedList
+      Default: subnet-0ba2b4e5b1fcffac7,subnet-0f2f5b594e51d0623
 
   # KeyPair
     myKeyPair: 
@@ -119,9 +125,9 @@ Mappings:
         DBName: MFTDDB
 
 ############################## Conditions
-Conditions: 
+Conditions:
   envNoDev: !Not [ !Equals [Ref: pEnvironment, "dev"]] 
-  
+
 ############################## Resources  
 Resources:
 
@@ -242,12 +248,12 @@ Resources:
               DBSubnetGroupName: 
                 Fn::Join: ["-", [Ref: 'AWS::StackName' , "subnetgroup"]]
               SubnetIds:
-                  - subnet-0f2f5b594e51d0623 #Subnet DEV B
-                  #- subnet-026692b4101281cd8 #Subnet DEV A
+                  Ref: Subnets
               Tags:
                 - Key: Name
                   Value: 
                     Fn::Join: ["-", [Ref: 'AWS::StackName' , "subnetgroup"]]
+
 
         # Secuirty Group RDS 
           rDBSecurityGroupsDBA: 
@@ -357,7 +363,7 @@ Resources:
                 - Ref: pDataBase
                 - Ref: pEnvironment
                 - PreferredMaintenanceWindow
-              OptionGroupName: aw1205-modernizacion-database-dev-stack-dbaoracleee19optiongroup-1a74pwr3ozt3s
+              #OptionGroupName: aw1205-modernizacion-database-dev-stack-dbaoracleee19optiongroup-1a74pwr3ozt3s
               DeletionProtection: false 
               PubliclyAccessible: false
               DeleteAutomatedBackups: true
