@@ -402,21 +402,21 @@ Outputs:
       Ref: rKmsKeyRDS
 
 ######################## Secuirty Group RDS ######################################
-  rDBSecurityGroupsDBA: 
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupName: !Join ["",[!Ref 'AWS::StackName', "sg-private-DB"]] 
-      GroupDescription: Grupo de securidad para la instancia de base de datos.
-      SecurityGroupIngress:  
-        - IpProtocol: tcp
-          FromPort: 50423
-          ToPort: 50423
-          CidrIp: 0.0.0.0/0
-          Description: Allow access to the EC2 APP from Subnet Private   
-      VpcId: !Ref DefaultVPCId 
-      Tags:
-        - Key: Name
-          Value: !Join ["",[!Ref 'AWS::StackName', "sg-private-DB"]]
+rDBSecurityGroupsDBA: 
+  Type: AWS::EC2::SecurityGroup
+  Properties:
+    GroupName: !Join ["",[!Ref 'AWS::StackName', "sg-private-DB"]] 
+    GroupDescription: Grupo de securidad para la instancia de base de datos.
+    SecurityGroupIngress:  
+      - IpProtocol: tcp
+        FromPort: 50423
+        ToPort: 50423
+        CidrIp: 0.0.0.0/0
+        Description: Allow access to the EC2 APP from Subnet Private   
+    VpcId: !Ref DefaultVPCId 
+    Tags:
+      - Key: Name
+        Value: !Join ["",[!Ref 'AWS::StackName', "sg-private-DB"]]
 
 #####################IAM Roles and Policy #########################################
 rIAMRoleForRDS:
