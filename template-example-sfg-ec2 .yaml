@@ -1,6 +1,6 @@
 ############################# Template y Description
 AWSTemplateFormatVersion: 2010-09-09
-  Description: Creacion Ec2 para servicio sanbox
+Description: Creacion Ec2 para servicio sanbox
 
 ############################## Metadata
 
@@ -242,9 +242,8 @@ Resources:
               DBSubnetGroupName: 
                 Fn::Join: ["-", [Ref: 'AWS::StackName' , "subnetgroup"]]
               SubnetIds:
-                  - envDev
-                  - subnet-0f2f5b594e51d0623 #Subnet DEV
-                  #- subnet-0f2f5b594e51d0623 #Subnet QA
+                  - subnet-0f2f5b594e51d0623 #Subnet DEV B
+                  #- subnet-026692b4101281cd8 #Subnet DEV A
               Tags:
                 - Key: Name
                   Value: 
