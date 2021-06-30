@@ -1,651 +1,391 @@
+############################# Template y Description
 AWSTemplateFormatVersion: 2010-09-09
-Description: Creacion Ec2 para servicio sanbox
+  Description: Creacion Ec2 para servicio sanbox
 
-################## Parameters #############################
+############################## Metadata
+
+############################## Parameters
 Parameters:
-  pEnvironment:
-    Type: String
-    AllowedValues:
-      - dev
-      - qa
-      - pdn
-    Description: Enter environment dev, qa, pdn.
-    Default: dev
+  # Type Environment
+    pEnvironment:
+      Type: String
+      AllowedValues:
+        - dev
+        - qa
+        - pdn
+      Description: Enter environment dev, qa, pdn.
+      Default: dev
   
-  pImportBase:
-    Description: The base name of the imported objetcs
-    Type: String
-    Default: aw1205001-modernizacion-mft
+  # Name Project
+    pImportBase:
+      Description: The base name of the imported objetcs
+      Type: String
+      Default: aw1205001-modernizacion-mft
 
-  DefaultVPCId:
-    Description: The VPC Default Project
-    Type: String
-    Default: vpc-070ca66092c150cc0
+  # VPC
+    DefaultVPCId:
+      Description: The VPC Default Project
+      Type: String
+      Default: vpc-070ca66092c150cc0
 
-  ################# KeyPair ################################
-  myKeyPair: 
-    Description: Amazon EC2 Key Pair
-    Type: "AWS::EC2::KeyPair::KeyName"
+  # KeyPair
+    myKeyPair: 
+      Description: Amazon EC2 Key Pair
+      Type: "AWS::EC2::KeyPair::KeyName"
   
-  ################## Database ##############################
-  pDataBase:
-    Description: Motor de base de datos
-    Type: String
+  # Section Database 
 
-  pBucketDB:
-    Type: String
-    Description: The S3 bucket name that contains the logs.
-
-  pLicenseModel:
-    Description: El modelo de licencia de la instancia de base de datos.
-    Type: String
-    Default: bring-your-own-license
-
-  pSnapshotIdentifier:
-    Description: Identificador de snapshot para restauracion.
-    Type: String
+  #Descritpion Database
+    pDataBase:
+      Description: Motor de base de datos
+      Type: String
+      Default: oracle
   
-  pCharacterSetName:
-    Description: Character set of the RDS.
-    Type: String
+  #DB User Root
+    pDBUsername:
+      Default: orcl
+      NoEcho: 'true'
+      Description: The Oracle database admin account username
+      Type: String
+      MinLength: '1'
+      MaxLength: '16'
+      AllowedPattern: "[a-zA-Z][a-zA-Z0-9]*"
+      ConstraintDescription: "must begin with a letter and contain only alphanumeric characters."
+  
+  #DB Password Root
+    pDBPassword:
+      Default: orcl12crds
+      NoEcho: 'true'
+      Description: The Oracle database admin account password
+      Type: String
+      MinLength: '8'
+      MaxLength: '41'
+      AllowedPattern: "[a-zA-Z0-9]*"
+      ConstraintDescription: "must contain only alphanumeric characters."
+  
+  #DB License
+    pLicenseModel:
+      Description: El modelo de licencia de la instancia de base de datos.
+      Type: String
+      Default: bring-your-own-license
+  
+  #DB Charter > VSTSS > Pipeline > librqary > New library modernizacion AW102%% >  Variable group
+    pCharacterSetName: #rds-character-set
+      Description: Character set of the RDS.
+      Type: String
+      Default: AL32UTF8
 
-  ################## KMS ##################################
-  pAWSKeyManagementServicePowerUser:
-    Description: Key use for the rds.
-    Type: String
-    Default: arn:aws:iam::aws:policy/AWSKeyManagementServicePowerUser
-
-############################## Mappings ####################################################
+  # KMS 
+  
+############################## Mappings  
 Mappings:
 
-  ############## Sterling #################################
-  mSterling:
-    dev: 
-      InstanceType: "t2.micro"          
-      ImageId: "ami-0b0af3577fe5e3532" #Red Hat Enterprise Linux 8 
-      EbsVolumeSize: 10
-      EbsVolumeSize2: 10
-      DisableApiTermination: "false"
-      Subnet1: "subnet-03537d0e8b9cfae20" #mft-public-A 1
-      Subnet2: "subnet-0f2f5b594e51d0623" #mft-public-B 1
-      Subnet3: "subnet-026692b4101281cd8" #mft-private-A 2
-      Subnet4: "subnet-0f2f5b594e51d0623" #mft-private-B 2
-<<<<<<< HEAD
+  # EC2 Sterling
+    mSterling:
+      dev: 
+        InstanceType: "t2.micro"          
+        ImageId: "ami-0b0af3577fe5e3532" #Red Hat Enterprise Linux 8 
+        EbsVolumeSize: 10
+        EbsVolumeSize2: 10
+        DisableApiTermination: "false"
+        Subnet1: "subnet-03537d0e8b9cfae20" #mft-public-A 1
+        Subnet2: "subnet-0ba2b4e5b1fcffac7" #mft-public-B 1
+        Subnet3: "subnet-026692b4101281cd8" #mft-private-A 2
+        Subnet4: "subnet-0f2f5b594e51d0623" #mft-private-B 2
 
-  ############# Mapping Database ######################### 
-=======
-      # NlbCidrIp1: 10.104.28.0/24 # segmento Subred donde se desplegará el Nlb
-      # NlbCidrIp2: AWS::NoValue
-      # NlbCidrIp3: AWS::NoValue
-      # NlbSFTPPort: 10026
-      # NlbFTPSPort: 8032
-      # NlbCDPort: 1364
-      # RdsCidrIp1: 10.104.31.0/25
-      # RdsCidrIp2: AWS::NoValue
-      # Deploymentgroupname: "AW1205001_Sterling_ComponentesComunes"
-      # DeploymentgroupPath: "/azagent" 
-    qa: 
-      InstanceType: "t2.micro"          
-      ImageId: "ami-0b0af3577fe5e3532" #Red Hat Enterprise Linux 8 
-      EbsVolumeSize: 10
-      EbsVolumeSize2: 10
-      DisableApiTermination: "false"
-      Subnet1: "subnet-03537d0e8b9cfae20" #mft-public-A 1
-      Subnet2: "subnet-0f2f5b594e51d0623" #mft-public-B 1
-      Subnet3: "subnet-026692b4101281cd8" #mft-private-A 2
-      Subnet4: "subnet-0f2f5b594e51d0623" #mft-private-B 2   
+  # Database 
+    oracle:
+      dev: 
+        BackupRetentionPeriod: 8
+        Engine: "oracle-ee"
+        EngineVersion: "19.0.0.0.ru-2021-01.rur-2021-01.r2"
+        instanceClass: "db.m5.large"
+        MultiAZ: false              
+        port: "50423"
+        PreferredMaintenanceWindow: Sun:07:00-Sun:09:00
+        PreferredBackupWindow: "05:00-06:00"
+        Daticaluser: "CNXDATID"
+        EnableCloudwatchLogsExports:
+          - trace
+          - audit
+          - alert
+          - listener
+        allocatedStorage: 100
+        maxAllocatedStorage: 300 
+        storageType: "gp2"
+        #AWSKeyManagementServicePowerUser: 
+        ##  - arn:aws:iam::aws:policy/AWSKeyManagementServicePowerUser
+        #  - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
+        DBName: MFTDDB
 
->>>>>>> 8bbcb8f6e076030bdbe46052a9811b673e5ad887
-  oracle:
-    dev: 
-      BackupRetentionPeriod: 8
-      Engine: "oracle-ee"
-      EngineVersion: "19.0.0.0.ru-2021-01.rur-2021-01.r2"
-      instanceClass: "db.m5.large"
-      MultiAZ: false              
-<<<<<<< HEAD
-      port: "50423"
-=======
-      port: "1433"
->>>>>>> 8bbcb8f6e076030bdbe46052a9811b673e5ad887
-      PreferredMaintenanceWindow: Sun:07:00-Sun:09:00
-      PreferredBackupWindow: "05:00-06:00"
-      Daticaluser: "CNXDATID"
-      EnableCloudwatchLogsExports:
-        - trace
-        - audit
-        - alert
-        - listener
-      allocatedStorage: 100
-      maxAllocatedStorage: 300 
-      storageType: "gp2"
-<<<<<<< HEAD
-      AWSKeyManagementServicePowerUser: 
-        - arn:aws:iam::aws:policy/AWSKeyManagementServicePowerUser
-        - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
-      DBName: MFTDDB
-
-
-=======
-      # AWSKeyManagementServicePowerUser: 
-      #   - arn:aws:iam::aws:policy/AWSKeyManagementServicePowerUser
-      #   - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
-      DBName: MFTDDB
->>>>>>> 8bbcb8f6e076030bdbe46052a9811b673e5ad887
-
-############################## Conditions ####################################################
-Conditions:  
+############################## Conditions
+Conditions: 
   envNoDev: !Not [ !Equals [Ref: pEnvironment, "dev"]] 
   
-
-############################## Resources ####################################################
+############################## Resources  
 Resources:
 
-############################################################################################################
-# Segmento Publico
-############################################################################################################
+    ############################################################################################################
+    # Segmento Publico
+    ############################################################################################################
 
+      ############################################################################################################
+      # Segmento Publico A
+      #################################### EC2
 
-####################################   Security Groups  ####################################################
+        # Security Groups
+          rSecurityGroupEc2Public: 
+            Type: AWS::EC2::SecurityGroup
+            Properties:
+              GroupName: !Join ["",[!Ref 'AWS::StackName', "sg-public"]] 
+              GroupDescription: security group para el EC2
+              SecurityGroupIngress:  
+                - IpProtocol: "-1"
+                  CidrIp: 0.0.0.0/0
+                  Description: Allow access to the EC2 APP from Public
+              VpcId: !Ref DefaultVPCId
+              Tags:
+                - Key: Name
+                  Value: !Join ["",[!Ref 'AWS::StackName', "sg-public"]]
 
-  rSecurityGroupEc2Public: 
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupName: !Join ["",[!Ref 'AWS::StackName', "sg-public"]] 
-      GroupDescription: security group para el EC2
-      SecurityGroupIngress:  
-        - IpProtocol: "-1"
-          CidrIp: 0.0.0.0/0
-          Description: Allow access to the EC2 APP from Public
-      VpcId: !Ref DefaultVPCId
-      Tags:
-        - Key: Name
-          Value: !Join ["",[!Ref 'AWS::StackName', "sg-public"]]
+        # Instancia Perimeter
+          rEc2PSNodo1:
+            Type: AWS::EC2::Instance
+            # Condition: envNoDev  # >> depende del ambiente
+            Properties:
+              DisableApiTermination: !FindInMap [mSterling, !Ref pEnvironment, DisableApiTermination]
+              SecurityGroupIds:
+                - !Ref rSecurityGroupEc2Public
+              SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet1]  # >> Pilas Subnet 1
+              Monitoring: True
+              InstanceType: !FindInMap [mSterling, !Ref pEnvironment, InstanceType]
+              ImageId: !FindInMap [mSterling, !Ref pEnvironment, ImageId]
+              # IamInstanceProfile: !Ref rEC2InstanceProfileSFG
+              Tags:
+                - Key: Name
+                  Value: !Join ["", [!Ref 'pImportBase',"ec2-ps-nodo1"]]   
+              BlockDeviceMappings:
+                - DeviceName: /dev/sda1
+                  Ebs:
+                    VolumeSize: !FindInMap [mSterling, !Ref pEnvironment, EbsVolumeSize]
+              KeyName: !Ref myKeyPair
+              #UserData:
+              # 
+              # Nombre de la maquina h
 
-  
+      ############################################################################################################
+      # Segmento Publico B
+      #################################### EC2
 
-####################################   EC2      ####################################################
-# Instancia Perimeter
-####################################################################################################
+        # Security Groups
 
-  rEc2PSNodo1:
-    Type: AWS::EC2::Instance
-  # Condition: envNoDev  # >> depende del ambiente
-    Properties:
-      DisableApiTermination: !FindInMap [mSterling, !Ref pEnvironment, DisableApiTermination]
-      SecurityGroupIds:
-        - !Ref rSecurityGroupEc2Public
-      SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet1]  # >> Pilas Subnet 1
-      Monitoring: True
-      InstanceType: !FindInMap [mSterling, !Ref pEnvironment, InstanceType]
-      ImageId: !FindInMap [mSterling, !Ref pEnvironment, ImageId]
-      # IamInstanceProfile: !Ref rEC2InstanceProfileSFG
-      Tags:
-        - Key: Name
-          Value: !Join ["", [!Ref 'pImportBase',"ec2-ps-nodo1"]]   
-      BlockDeviceMappings:
-        - DeviceName: /dev/sda1
-          Ebs:
-            VolumeSize: !FindInMap [mSterling, !Ref pEnvironment, EbsVolumeSize]
-      KeyName: !Ref myKeyPair
-      #UserData:
-      # 
-      # Nombre de la maquina h
+        # Instancia Perimeter
 
+    ############################################################################################################
+    ## Segmento Privado EKS
+    ############################################################################################################
 
-#####################################################################################
-## Segmento Privado EKS
-#####################################################################################
-  
-  rSecurityGroupEc2Private: 
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupName: !Join ["",[!Ref 'AWS::StackName', "sg-private-EKS"]] 
-      GroupDescription: security group para el EC2
-      SecurityGroupIngress:  
-        - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          CidrIp: 0.0.0.0/0
-          Description: Allow access to the EC2 APP from Subnet Private   
-      VpcId: !Ref DefaultVPCId 
-      Tags:
-        - Key: Name
-          Value: !Join ["",[!Ref 'AWS::StackName', "sg-private-EKS"]]
+      ############################################################################################################
+      # Segmento Private A EC2
+      #################################### EC2
 
-# Instancia Sterling Nodo1 
-  rEc2SterlingNodo1:
-    Type: AWS::EC2::Instance
-    Properties:
-      DisableApiTermination: !FindInMap [mSterling, !Ref pEnvironment, DisableApiTermination]
-      SecurityGroupIds:
-        - !Ref rSecurityGroupEc2Private     
-      SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet3]  # >> Pilas Subnet 1 
-      Monitoring: True
-      InstanceType: !FindInMap [mSterling, !Ref pEnvironment, InstanceType]
-      ImageId: !FindInMap [mSterling, !Ref pEnvironment, ImageId]
-      Tags:
-        - Key: Name
-          Value: !Join ["", [!Ref 'pImportBase',"ec2-sfg-nodo1"]]  
-      BlockDeviceMappings:
-        - DeviceName: /dev/sda1
-          Ebs:
-            VolumeSize: !FindInMap [mSterling, !Ref pEnvironment, EbsVolumeSize]
-      KeyName: !Ref myKeyPair
-      #UserData:
-      # 
-      # Nombre de la maquina
+        # Security Groups EC2
+          rSecurityGroupEc2Private: 
+            Type: AWS::EC2::SecurityGroup
+            Properties:
+              GroupName: !Join ["",[!Ref 'AWS::StackName', "sg-private-EKS"]] 
+              GroupDescription: security group para el EC2
+              SecurityGroupIngress:  
+                - IpProtocol: tcp
+                  FromPort: 22
+                  ToPort: 22
+                  CidrIp: 0.0.0.0/0
+                  Description: Allow access to the EC2 APP from Subnet Private   
+              VpcId: !Ref DefaultVPCId 
+              Tags:
+                - Key: Name
+                  Value: !Join ["",[!Ref 'AWS::StackName', "sg-private-EKS"]]
 
-#####################################################################################
-## Segmento Privado DB
-#####################################################################################
+        # Instancia Sterling Nodo1 
+          rEc2SterlingNodo1:
+            Type: AWS::EC2::Instance
+            Properties:
+              DisableApiTermination: !FindInMap [mSterling, !Ref pEnvironment, DisableApiTermination]
+              SecurityGroupIds:
+                - !Ref rSecurityGroupEc2Private     
+              SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet3]  # >> Pilas Subnet 1 
+              Monitoring: True
+              InstanceType: !FindInMap [mSterling, !Ref pEnvironment, InstanceType]
+              ImageId: !FindInMap [mSterling, !Ref pEnvironment, ImageId]
+              Tags:
+                - Key: Name
+                  Value: !Join ["", [!Ref 'pImportBase',"ec2-sfg-nodo1"]]  
+              BlockDeviceMappings:
+                - DeviceName: /dev/sda1
+                  Ebs:
+                    VolumeSize: !FindInMap [mSterling, !Ref pEnvironment, EbsVolumeSize]
+              KeyName: !Ref myKeyPair
+              #UserData:
+              # 
+              # Nombre de la maquina
 
-########################### SubnetGroup RDS #############################################
-rSubnetGroupRDS:
-  Type: AWS::RDS::DBSubnetGroup
-  Properties:
-    DBSubnetGroupDescription: 
-      Fn::Join: ["-", [Ref: 'AWS::StackName' , "subnetgroup"]]
-    DBSubnetGroupName: 
-      Fn::Join: ["-", [Ref: 'AWS::StackName' , "subnetgroup"]]
-    SubnetIds:
-        - envDev
-        - subnet-0f2f5b594e51d0623 #Subnet DEV
-        #- subnet-054c98fb79f074b27 #Subnet QA
-    Tags:
-      - Key: Name
-        Value: 
-          Fn::Join: ["-", [Ref: 'AWS::StackName' , "subnetgroup"]]
+      ############################################################################################################
+      # Segmento Private B Database
+      #################################### Database
 
-######################## KMS ######################################
-rIAMRoleForKMS:
-    Type: 'AWS::IAM::Role'
-    Properties:
-      PermissionsBoundary: !Sub arn:aws:iam::${AWS::AccountId}:policy/Lz-Governance-Boundary
-      RoleName: !Join ["-", [!Ref 'AWS::StackName', "role-admin"]]
-      ManagedPolicyArns:
-        - !Ref pAWSKeyManagementServicePowerUser
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - ec2.amazonaws.com
-                - rds.amazonaws.com
-                - s3.amazonaws.com
-                - cks.kms.amazonaws.com
-            Action:
-              - 'sts:AssumeRole'
-      Path: /
-      
-  rIAMRoleForKMSUser:
-    Type: 'AWS::IAM::Role'
-    Properties:
-      PermissionsBoundary: !Sub arn:aws:iam::${AWS::AccountId}:policy/Lz-Governance-Boundary
-      RoleName: !Join ["-", [!Ref 'AWS::StackName', "role-user"]]
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - ec2.amazonaws.com
-                - kms.amazonaws.com
-                - s3.amazonaws.com
-            Action:
-              - 'sts:AssumeRole'
-      Path: /
-      Policies:
-      - PolicyDocument:
-          Version: 2012-10-17
-          Statement:
-          - Action:
-            - kms:Encrypt
-            - kms:Decrypt
-            - kms:GenerateDataKey*
-            Resource: !Join [ ":", ["arn:aws:kms", !Ref AWS::Region, !Ref AWS::AccountId, "key/*"]]
-            Effect: Allow
-        PolicyName: UserKms
+        # SubnetGroup RDS
+          rSubnetGroupRDS:
+            Type: AWS::RDS::DBSubnetGroup
+            Properties:
+              DBSubnetGroupDescription: 
+                Fn::Join: ["-", [Ref: 'AWS::StackName' , "subnetgroup"]]
+              DBSubnetGroupName: 
+                Fn::Join: ["-", [Ref: 'AWS::StackName' , "subnetgroup"]]
+              SubnetIds:
+                  - envDev
+                  - subnet-0f2f5b594e51d0623 #Subnet DEV
+                  #- subnet-0f2f5b594e51d0623 #Subnet QA
+              Tags:
+                - Key: Name
+                  Value: 
+                    Fn::Join: ["-", [Ref: 'AWS::StackName' , "subnetgroup"]]
 
-  rKmsKeyRDS:
-    Type: AWS::KMS::Key
-    Properties:
-      Description: !Join ["-", [!Ref pImportBase, "rds-kms-key"]]
-      EnableKeyRotation: true
-      PendingWindowInDays: 30
-      KeyPolicy:
-        Version: 2012-10-17
-        Id: key-policy
-        Statement:
-          - Sid: Enable IAM User Permissions
-            Effect: Allow
-            Principal:
-              AWS: !Join ["", ["arn:aws:iam::", !Ref 'AWS::AccountId',":root"]]
-            Action:
-              - "kms:*"
-            Resource: '*'
-          - Sid: Allow key admin
-            Effect: Allow
-            Principal:
-              AWS:
-              - !GetAtt rIAMRoleForKMS.Arn
-            Action:
-              - "kms:Create*"
-              - "kms:Describe*"
-              - "kms:Enable*"
-              - "kms:List*"
-              - "kms:Put*"
-              - "kms:Update*"
-              - "kms:Revoke*"
-              - "kms:Disable*"
-              - "kms:Get*"
-              - "kms:Delete*"
-              - "kms:ScheduleKeyDeletion"
-              - "kms:CancelKeyDeletion"
-            Resource: '*'
-          - Sid: Allow use of the key
-            Effect: Allow
-            Principal:
-              AWS:
-              - !GetAtt rIAMRoleForKMSUser.Arn
-              # - !Ref pSFTPRol
-            Action:
-            - kms:Encrypt
-            - kms:Decrypt
-            - kms:ReEncrypt*
-            - kms:GenerateDataKey*
-            - kms:DescribeKey
-            - kms:Update*
-            Resource: "*"
-      
-      Tags:
-        - Key: "bancolombia:application-code"
-          Value: "aw1205001"
-        - Key: "bancolombia:project-name"
-          Value: "servicio-mft"
-        - Key: "bancolombia:pmo"
-          Value: "pmo30686"
-        - Key: "bancolombia:cost-center"
-          Value: "c103500282"
-        - Key: "bancolombia:bussiness-service"
-          Value: "servicios-e-integracion"
-        - Key: "bancolombia:environment"
-          Value: "dev"  
+        # Secuirty Group RDS 
+          rDBSecurityGroupsDBA: 
+            Type: AWS::EC2::SecurityGroup
+            Properties:
+              GroupName: !Join ["",[!Ref 'AWS::StackName', "sg-private-DB"]] 
+              GroupDescription: Grupo de securidad para la instancia de base de datos.
+              SecurityGroupIngress:  
+                - IpProtocol: tcp
+                  FromPort: 50423
+                  ToPort: 50423
+                  CidrIp: 0.0.0.0/0
+                  Description: Allow access to the EC2 APP from Subnet Private   
+              VpcId: !Ref DefaultVPCId 
+              Tags:
+                - Key: Name
+                  Value: !Join ["",[!Ref 'AWS::StackName', "sg-private-DB"]]
 
-  rKmsKeyAlias:
-    Type: AWS::KMS::Alias
-    Properties:
-      AliasName: !Join ["", ["alias/", !Ref 'AWS::StackName']]
-      TargetKeyId: !Ref rKmsKeyRDS
+        # Instance RDS
+          rDataBases:
+            Type: 'AWS::RDS::DBInstance'
+            Properties:
+              CopyTagsToSnapshot: true
+              DBName: 
+                Fn::FindInMap:
+                  - Ref: pDataBase
+                  - Ref: pEnvironment
+                  - DBName
+              DBInstanceIdentifier: 
+                Fn::Join: [ "-", [Ref: pImportBase, "sfg-rds"] ]
+              DBSubnetGroupName: 
+                Ref: rSubnetGroupRDS
+              AllowMajorVersionUpgrade: true
+              VPCSecurityGroups: 
+                - Ref: rDBSecurityGroupsDBA
+                #- Fn::ImportValue: 
+                #    Fn::Sub: 'aw0000-database-${pEnvironment}-stack-sg-transversal'
+              AllocatedStorage:
+                Fn::FindInMap:
+                - Ref: pDataBase
+                - Ref: pEnvironment
+                - allocatedStorage
+              MaxAllocatedStorage:
+                Fn::FindInMap:
+                - Ref: pDataBase
+                - Ref: pEnvironment
+                - maxAllocatedStorage
+              StorageType: 
+                Fn::FindInMap:
+                - Ref: pDataBase
+                - Ref: pEnvironment
+                - storageType
+              DBInstanceClass: 
+                Fn::FindInMap:
+                - Ref: pDataBase
+                - Ref: pEnvironment
+                - instanceClass
+              Engine: 
+                Fn::FindInMap:
+                - Ref: pDataBase
+                - Ref: pEnvironment
+                - Engine
+              EngineVersion: 
+                Fn::FindInMap:
+                - Ref: pDataBase
+                - Ref: pEnvironment
+                - EngineVersion
+              LicenseModel: 
+                Ref: pLicenseModel
+              Port: 
+                Fn::FindInMap:
+                - Ref: pDataBase
+                - Ref: pEnvironment
+                - port
+              #KmsKeyId: 
+                #Ref: rKmsKeyRDS
+                #Fn::Join: ["", ["{{resolve:ssm:", Ref: pImportBase, "-rds-kms-key:1}}"]]
+              CharacterSetName: 
+                Ref: pCharacterSetName
+              MultiAZ: 
+                Fn::FindInMap:
+                - Ref: pDataBase
+                - Ref: pEnvironment
+                - MultiAZ 
+              EnableCloudwatchLogsExports:
+                Fn::FindInMap:
+                - Ref: pDataBase
+                - Ref: pEnvironment
+                - EnableCloudwatchLogsExports
+              MasterUsername: !Ref 'pDBUsername'
+              MasterUserPassword: !Ref 'pDBPassword'
+              DBParameterGroupName: !Ref 'MyRDSParamGroup'
+              #MasterUsername:
+              #  Fn::Join: ['', ['{{resolve:secretsmanager:', Ref: rSecretAdminRDS, ':SecretString:username}}' ]]
+              #MasterUserPassword:
+              #  Fn::Join: ['', ['{{resolve:secretsmanager:', Ref: rSecretAdminRDS, ':SecretString:password}}' ]]
+              PreferredBackupWindow:
+                Fn::FindInMap:
+                - Ref: pDataBase
+                - Ref: pEnvironment
+                - PreferredBackupWindow
+              #DBParameterGroupName: aw1205-modernizacion-database-dev-stack-dbaoracleee19parametergroup-thfz7u9zigpl
+              StorageEncrypted: true
+              AutoMinorVersionUpgrade: true
+              EnablePerformanceInsights: true
+              PreferredMaintenanceWindow: 
+                Fn::FindInMap:
+                - Ref: pDataBase
+                - Ref: pEnvironment
+                - PreferredMaintenanceWindow
+              OptionGroupName: aw1205-modernizacion-database-dev-stack-dbaoracleee19optiongroup-1a74pwr3ozt3s
+              DeletionProtection: false 
+              PubliclyAccessible: false
+              DeleteAutomatedBackups: true
+              BackupRetentionPeriod: 
+                Fn::FindInMap:
+                - Ref: pDataBase
+                - Ref: pEnvironment
+                - BackupRetentionPeriod
+              Tags: 
+                - Key: "bancolombia:eks"
+                  Value: "rds"
+        
+        # Parameter Group
+          MyRDSParamGroup:
+            Type: AWS::RDS::DBParameterGroup
+            Properties:
+              Family: oracle-ee-19c
+              Description: Oracle DB Parameter Group
+              Parameters:
+                compatible: '19.0.0.0'
 
-  rKmsKeyParameterStore:
-    Type: AWS::SSM::Parameter
-    Properties: 
-        Description: kmsKeyRDS
-        Type: String
-        Name: !Join ["-", [!Ref pImportBase, "rds-kms-key"]]
-        Value:
-            Ref: rKmsKeyRDS
+############################## Transform
 
-  rKmsARNParameterStore:
-    Type: AWS::SSM::Parameter
-    Properties: 
-        Description: kmsKeyRDS
-        Type: String
-        Name: !Join ["-", [!Ref pImportBase, "rds-kms-key-arn"]]
-        Value: 
-            !GetAtt rKmsKeyRDS.Arn
-
+############################## Outputs
 Outputs:
-  rKmsKey:
-    Description: kmsKeyRDS
-    Value:
-      Ref: rKmsKeyRDS
-
-######################## Secuirty Group RDS ######################################
-rDBSecurityGroupsDBA: 
-  Type: AWS::EC2::SecurityGroup
-  Properties:
-    GroupName: !Join ["",[!Ref 'AWS::StackName', "sg-private-DB"]] 
-    GroupDescription: Grupo de securidad para la instancia de base de datos.
-    SecurityGroupIngress:  
-      - IpProtocol: tcp
-        FromPort: 50423
-        ToPort: 50423
-        CidrIp: 0.0.0.0/0
-        Description: Allow access to the EC2 APP from Subnet Private   
-    VpcId: !Ref DefaultVPCId 
-    Tags:
-      - Key: Name
-        Value: !Join ["",[!Ref 'AWS::StackName', "sg-private-DB"]]
-
-#####################IAM Roles and Policy #########################################
-rIAMRoleForRDS:
-    Type: AWS::IAM::Role
-    Properties:
-      PermissionsBoundary: !Sub arn:aws:iam::${AWS::AccountId}:policy/Lz-Governance-Boundary
-      RoleName: 
-        Fn::Join: ["-", [Ref: 'AWS::StackName' , "role"]]
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - rds.amazonaws.com
-                - monitoring.rds.amazonaws.com
-            Action:
-              - 'sts:AssumeRole'
-      Path: /
-      Policies:
-        - PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Action:
-                  - 's3:Get*'
-                  - 's3:Put*'
-                  - 's3:List*'
-                  - 's3:AbortMultipartUpload'
-                Resource:
-                  Fn::Sub: arn:aws:s3:::${pImportBase}-db-sfg/*
-                Effect: Allow
-          PolicyName: 
-            Fn::Join: ["-", [Ref: 'AWS::StackName' , "iam-policy"]]
-        - PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Action:
-                  - 's3:Get*'
-                  - 's3:Put*'
-                  - 's3:List*'
-                  - 's3:AbortMultipartUpload'
-                Resource:
-                  Fn::Sub: arn:aws:s3:::${pImportBase}-db-sfg
-                Effect: Allow
-          PolicyName: 
-            Fn::Join: ["-", [Ref: 'AWS::StackName' , "iam-policy2"]]
-
-  ############# Resources Databases RDS ############################################
-  rDataBases:
-    Type: 'AWS::RDS::DBInstance'
-    Properties:
-      CopyTagsToSnapshot: true
-      DBName: 
-        Fn::FindInMap:
-          - Ref: pDataBase
-          - Ref: pEnvironment
-          - DBName
-      DBInstanceIdentifier: 
-        Fn::Join: [ "-", [Ref: pImportBase, "sfg-eks-rds"] ]
-      AllowMajorVersionUpgrade: true
-      VPCSecurityGroups: 
-        - Ref: rDBSecurityGroupsDBA
-        - Fn::ImportValue: 
-            Fn::Sub: 'aw1205-database-${pEnvironment}-stack-sg-transversal'
-      AllocatedStorage:
-        Fn::FindInMap:
-        - Ref: pDataBase
-        - Ref: pEnvironment
-        - allocatedStorage
-      MaxAllocatedStorage:
-        Fn::FindInMap:
-        - Ref: pDataBase
-        - Ref: pEnvironment
-        - maxAllocatedStorage
-      StorageType: 
-        Fn::FindInMap:
-        - Ref: pDataBase
-        - Ref: pEnvironment
-        - storageType
-      DBInstanceClass: 
-        Fn::FindInMap:
-        - Ref: pDataBase
-        - Ref: pEnvironment
-        - instanceClass
-      Engine: 
-        Fn::FindInMap:
-        - Ref: pDataBase
-        - Ref: pEnvironment
-        - Engine
-      EngineVersion: 
-        Fn::FindInMap:
-        - Ref: pDataBase
-        - Ref: pEnvironment
-        - EngineVersion
-      LicenseModel: 
-        Ref: pLicenseModel
-      Port: 
-        Fn::FindInMap:
-        - Ref: pDataBase
-        - Ref: pEnvironment
-        - port
-      KmsKeyId: 
-      #Ref: rKmsKeyRDS
-      Fn::Join: ["", ["{{resolve:ssm:", Ref: pImportBase, "-rds-kms-key:1}}"]]
-
-      CharacterSetName: 
-        Ref: pCharacterSetName
-      MultiAZ: 
-        Fn::FindInMap:
-        - Ref: pDataBase
-        - Ref: pEnvironment
-        - MultiAZ 
-      EnableCloudwatchLogsExports:
-        Fn::FindInMap:
-        - Ref: pDataBase
-        - Ref: pEnvironment
-        - EnableCloudwatchLogsExports
-      MasterUsername:
-        Fn::Join: ['', ['{{resolve:secretsmanager:', Ref: rSecretAdminRDS, ':SecretString:username}}' ]]
-      MasterUserPassword:
-        Fn::Join: ['', ['{{resolve:secretsmanager:', Ref: rSecretAdminRDS, ':SecretString:password}}' ]]
-      PreferredBackupWindow:
-        Fn::FindInMap:
-        - Ref: pDataBase
-        - Ref: pEnvironment
-        - PreferredBackupWindow
-      DBParameterGroupName: aw0000-database-dev-stack-dbaoracleee19parametergroup-thfz7u9zigpl
-      StorageEncrypted: true
-      AutoMinorVersionUpgrade: true
-      EnablePerformanceInsights: true
-      PreferredMaintenanceWindow: 
-        Fn::FindInMap:
-        - Ref: pDataBase
-        - Ref: pEnvironment
-        - PreferredMaintenanceWindow 
-      DBSubnetGroupName: 
-        Ref: rSubnetGroupRDS
-      OptionGroupName: aw0000-database-dev-stack-dbaoracleee19optiongroup-1a74pwr3ozt3s
-      DeletionProtection: false 
-      PubliclyAccessible: false
-      DeleteAutomatedBackups: true
-      BackupRetentionPeriod: 
-        Fn::FindInMap:
-        - Ref: pDataBase
-        - Ref: pEnvironment
-        - BackupRetentionPeriod
-      AssociatedRoles:
-        - FeatureName: S3_INTEGRATION
-          RoleArn: 
-            Fn::GetAtt: rIAMRoleForRDS.Arn
-      MonitoringRoleArn: !GetAtt rEnhancedMonitoringRole.Arn
-      MonitoringInterval: 60
-      Tags:        
-        - Key: "bancolombia:clasificacion-confidencialidad"
-          Value: "confidencial"
-        - Key: "bancolombia:clasificacion-integridad"
-          Value: "impacto moderado"
-        - Key: "bancolombia:clasificacion-disponibilidad"
-          Value: "impacto moderado"
-        - Key: "bancolombia:dominio-informacion"
-          Value: "financiera-riesgos-seguridad"
-        - Key: "bancolombia:datos-personales"
-          Value: "clientes-empleados"
-        - Key: "bancolombia:cumplimiento"
-          Value: "sox"
-        - Key: "bancolombia:bkmensual"
-          Value: "rds"
-
-####################### Security Group EC2 #####################
-rSecurityGroupEc2Private: 
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupName: !Join ["",[!Ref 'AWS::StackName', "sg-private-EC2"]] 
-      GroupDescription: security group para el EC2
-      SecurityGroupIngress:  
-        - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          CidrIp: 0.0.0.0/0
-          Description: Allow access to the EC2 APP from Subnet Private
-        - IpProtocol: tcp
-          FromPort: 1433
-          ToPort: 1433
-          CidrIp: 0.0.0.0/0
-          Description: Allow access to the RDS APP from Subnet Private  
-      VpcId: vpc-070ca66092c150cc0   
-      Tags:
-        - Key: Name
-<<<<<<< HEAD
-          Value: !Join ["",[!Ref 'AWS::StackName', "sg-private-EC2"]]
-
-# Instancia Sterling Nodo1 
-=======
-          Value: !Join ["",[!Ref 'AWS::StackName', "-private-sg"]]
-####SG subnet RDS ################
-  rSubnetGroupRDS:
-      Type: AWS::RDS::DBSubnetGroup
-      Properties:
-        DBSubnetGroupDescription: 
-          Fn::Join: ["-", [Ref: 'AWS::StackName' , "subnetgroup"]]
-        DBSubnetGroupName: 
-          Fn::Join: ["-", [Ref: 'AWS::StackName' , "subnetgroup"]]
-        SubnetIds:
-          - subnet-010e7f6e238fce8be #Subnet PDN
-        Tags:
-          - Key: Name
-            Value: 
-              Fn::Join: ["-", [Ref: 'AWS::StackName' , "subnetgroup"]]
-              
-
-  # Instancia Sterling Nodo1 
->>>>>>> 8bbcb8f6e076030bdbe46052a9811b673e5ad887
-  rEc2SterlingNodo1:
-    Type: AWS::EC2::Instance
-    Properties:
-      DisableApiTermination: !FindInMap [mSterling, !Ref pEnvironment, DisableApiTermination]
-      SecurityGroupIds:
-        - !Ref rSecurityGroupEc2Private     
-      SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet3]  # >> Pilas Subnet 1 
-      Monitoring: True
-      InstanceType: !FindInMap [mSterling, !Ref pEnvironment, InstanceType]
-      ImageId: !FindInMap [mSterling, !Ref pEnvironment, ImageId]
-      Tags:
-        - Key: Name
-          Value: !Join ["", [!Ref 'pImportBase',"-sfg-nodo1-ec2"]]  
-      BlockDeviceMappings:
-        - DeviceName: /dev/sda1
-          Ebs:
-            VolumeSize: !FindInMap [mSterling, !Ref pEnvironment, EbsVolumeSize]
-      KeyName: !Ref myKeyPair
-      #UserData:
-      # 
-      # Nombre de la maquina
+  MasterJDBCConnectionString:
+    Description: JDBC connection string for the master database
+    Value: !Join ['', ['jdbc:mysql://', !GetAtt [rDataBases, Endpoint.Address], ':',
+        !GetAtt [rDataBases, Endpoint.Port], /, DBName]]

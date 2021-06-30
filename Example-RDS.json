@@ -1,0 +1,169 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "AWS CloudFormation  Template Oracle RDS",
+    "Parameters": {
+        "VpcId": {
+             "Default": "vpc-6a78780c",
+             "Type": "String",
+             "Description": "VpcId of your existing Virtual Private Cloud (VPC)"
+        },
+        "Subnets": {
+             "Default": "subnet-10461675,subnet-dff72197,subnet-b50ce899,subnet-2b077c17",
+             "Type": "CommaDelimitedList",
+             "Description": "The list of SubnetIds, for at least two Availability Zones in the region in your Virtual Private Cloud (VPC)"
+        },
+        "DBName": {
+             "Default": "orcldb",
+             "Description": "The Oracle database name",
+             "Type": "String",
+             "MinLength": "1",
+             "MaxLength": "64",
+             "AllowedPattern": "[a-zA-Z][a-zA-Z0-9]*",
+             "ConstraintDescription": "must begin with a letter and contain only alphanumeric characters."
+        },
+        "DBUsername": {
+             "Default": "orcl",
+             "NoEcho": "true",
+             "Description": "The Oracle database admin account username",
+             "Type": "String",
+             "MinLength": "1",
+             "MaxLength": "16",
+             "AllowedPattern": "[a-zA-Z][a-zA-Z0-9]*",
+             "ConstraintDescription": "must begin with a letter and contain only alphanumeric characters."
+        },
+        "DBPassword": {
+             "Default": "orcl12crds",
+             "NoEcho": "true",
+             "Description": "The Oracle database admin account password",
+             "Type": "String",
+            "MinLength": "8",
+             "MaxLength": "41",
+             "AllowedPattern": "[a-zA-Z0-9]*",
+             "ConstraintDescription": "must contain only alphanumeric characters."
+        }
+    },
+    "Mappings": {
+        "AWSInstanceType2Arch": {
+             "t1.micro": {
+                 "Arch": "64"
+             },
+             "t2.micro": {
+                 "Arch": "64"
+             },
+             "m1.small": {
+                 "Arch": "64"
+             }
+        }
+    },
+    "Resources": {
+        "OrclDBSubnetGroup": {
+             "Type": "AWS::RDS::DBSubnetGroup",
+             "Properties": {
+                 "DBSubnetGroupDescription": "Subnets available for the RDS DB Instance",
+                 "SubnetIds": {
+                     "Ref": "Subnets"
+                 }
+             }
+        },
+        "OrclVPCSecurityGroup": {
+             "Type": "AWS::EC2::SecurityGroup",
+             "Properties": {
+                 "GroupDescription": "Security group for RDS DB Instance.",
+                 "VpcId": {
+                     "Ref": "VpcId"
+                 },
+                 "SecurityGroupIngress": [{
+                         "IpProtocol": "tcp",
+                         "FromPort": "80",
+                         "ToPort": "80",
+                         "CidrIp": "0.0.0.0/0"
+                     },
+                     {
+                         "IpProtocol": "tcp",
+                         "FromPort": "22",
+                         "ToPort": "22",
+                         "CidrIp": "0.0.0.0/0"
+                     },{
+                         "IpProtocol": "-1",
+                         "FromPort": "-1",
+                         "ToPort": "-1",
+                         "CidrIp": "0.0.0.0/0"
+                     }
+ 
+                 ]
+             }
+        },
+        "OraDB": {
+             "Type": "AWS::RDS::DBInstance",
+             "Properties": {
+                 "DBName": {
+                     "Ref": "DBName"
+                 },
+                 "DBInstanceIdentifier": "orcl",
+                 "DBSubnetGroupName": {
+                     "Ref": "OrclDBSubnetGroup"
+                 },
+                 "VPCSecurityGroups": [{
+                     "Ref": "OrclVPCSecurityGroup"
+                 }],
+                 "AllocatedStorage": "100",
+                 "DBInstanceClass": "db.t2.micro",
+                 "Engine": "oracle-ee",
+                 "EngineVersion": "12.1.0.2.v7",
+                 "LicenseModel": "bring-your-own-license",
+                 "Port": "1521",
+                 "MasterUsername": {
+                     "Ref": "DBUsername"
+                 },
+                 "MasterUserPassword": {
+                     "Ref": "DBPassword"
+                 },
+                 "DBParameterGroupName": {
+                     "Ref": "OrclRDSParamGroup"
+                 },
+                 "MultiAZ": "true"
+             },
+             "DeletionPolicy": "Snapshot"
+        },
+        "OrclRDSParamGroup": {
+             "Type": "AWS::RDS::DBParameterGroup",
+             "Properties": {
+                 "Family": "oracle-ee-12.1",
+                 "Description": "Oracle DB Parameter Group",
+                 "Parameters": {
+                     "compatible": "12.1.0.2"
+                 }
+             }
+        }
+    },
+    "Outputs": {
+        "JDBCConnectionString": {
+             "Description": "JDBC connection string for the Oracle database",
+             "Value": {
+                 "Fn::Join": [
+                     "", [
+                         "jdbc:oracle://",
+                         {
+                             "Fn::GetAtt": [
+                                  "OraDB",
+                                  "Endpoint.Address"
+                              ]
+                         },
+                         ":",
+                         {
+                             "Fn::GetAtt": [
+                                  "OraDB",
+                                  "Endpoint.Port"
+                              ]
+                         },
+                         "/",
+                         {
+                              "Ref": "DBName"
+                         }
+                     ]
+                 ]
+             }
+        }
+ 
+    }
+}
