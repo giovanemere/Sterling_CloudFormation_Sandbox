@@ -1,0 +1,122 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Este cloudformation despliega el efs para eks sterling
+
+Parameters:
+
+  pImportBase:
+    Description: The base name of the imported objetcs
+    Type: String
+    Default: mftcontainers
+
+  pVPC:
+    Type: String
+    Description: The VPC identity
+    Default: vpc-070ca66092c150cc0
+
+  pSubnet1:
+    Type: String
+    Description: The subnet where to launch the service
+    Default: subnet-026692b4101281cd8
+
+  pSubnet2:
+    Type: String
+    Description: the subnet where to Launch the service
+    Default: subnet-0f2f5b594e51d0623
+
+#  pSO:
+#    Description: Operating System
+#    Type: String
+#    Default: Linux
+
+#  pEnvironment:
+#    Description: The environment where it works
+#    Type: String
+#  pSubnet1:
+#    Description: Operating System
+#    Type: AWS::EC2::Subnet::Id
+#    Default: Linux
+#  pSubnet2:
+#    Description: Operating System
+#    Type: AWS::EC2::Subnet::Id
+#    Default: Linux
+
+# Mappings:
+#  Linux:
+#    dev: 
+#      InstanceType: "t3a.medium"          
+#      ImageId: "ami-0742b4e673072066f"
+#      DisableApiTermination: "false"
+#    qa: 
+#      InstanceType: "t3a.medium"          
+#      ImageId: "ami-001f2b16faeacd2c5"
+#      DisableApiTermination: "true"
+#    pdn: 
+#      InstanceType: "t3a.medium"          
+#      ImageId: "ami-001f2b16faeacd2c5"
+#      DisableApiTermination: "false"
+
+#mSterling:
+#    dev: 
+#      InstanceType: "t2.micro"          
+#      ImageId: "ami-0b0af3577fe5e3532" #Red Hat Enterprise Linux 8 
+#      EbsVolumeSize: 10
+#      EbsVolumeSize2: 10
+#      DisableApiTermination: "false"
+#      Subnet1: "subnet-03537d0e8b9cfae20" #mft-public-A 1
+#      Subnet2: "subnet-0ba2b4e5b1fcffac7" #mft-public-B 1
+#      Subnet3: "subnet-026692b4101281cd8" #mft-private-A 2
+#      Subnet4: "subnet-0f2f5b594e51d0623" #mft-private-B 2
+
+
+Resources:
+
+##############################################################################
+############                    EFS CODE                       ###############
+
+    rEFSSG:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            GroupName: !Join ["-", [!Ref pImportBase, "sfg-efs"]]
+            GroupDescription: Allow NFS to EFS
+            VpcId: !Ref pVPC
+            SecurityGroupIngress:
+              - Description: File systema access
+                IpProtocol: tcp
+                FromPort: 2049
+                ToPort: 2049
+                CidrIp: 0.0.0.0/0
+    #            SourceSecurityGroupId: 
+    #              Fn::Join: ['',['{{resolve:ssm:',!Sub '${pImportBase}-sfg-ec2-sgid}}']]
+      
+    pFileSystemResource:
+        Type: 'AWS::EFS::FileSystem'
+        Properties:
+            BackupPolicy:
+              Status: ENABLED
+            PerformanceMode: maxIO
+            ThroughputMode: bursting
+            Encrypted: true
+            LifecyclePolicies:
+              - TransitionToIA: AFTER_30_DAYS
+            FileSystemTags:
+              - Key: Name
+                Value: TestFileSystem
+        #    KmsKeyId: !GetAtt 
+        #      - rEFSkey
+        #     - Arn
+
+#    MountTargetResource1:
+#       Type: AWS::EFS::MountTarget
+#       Properties:
+#            FileSystemId: !Ref pFileSystemResource
+#            SubnetId: !Ref pSubnet1
+#            SecurityGroups: 
+#             - !Ref rEFSSG
+
+#    MountTargetResource2:
+#       Type: AWS::EFS::MountTarget
+#        Properties:
+#            FileSystemId: !Ref pFileSystemResource
+#           SubnetId: !Ref pSubnet2
+#            SecurityGroups: 
+#              - !Ref rEFSSG

@@ -354,7 +354,7 @@ Resources:
                 - Ref: pDataBase
                 - Ref: pEnvironment
                 - PreferredBackupWindow
-              DBParameterGroupName: aw1205-modernizacion-database-dev-stack-dbaoracleee19parametergroup-thfz7u9zigpl
+              DBParameterGroupName: !Ref DBParamGroupRDS
               StorageEncrypted: true
               AutoMinorVersionUpgrade: true
               EnablePerformanceInsights: true
@@ -375,6 +375,15 @@ Resources:
               Tags: 
                 - Key: "bancolombia:eks"
                   Value: "rds"
+
+          # DB 
+          DBParamGroupRDS:
+            Type: AWS::RDS::DBParameterGroup
+            Properties:
+              Family: oracle-ee-19
+              Description: Oracle DB Parameter Group
+              Parameters:
+                compatible: 19.0.0.0
 
 ############################## Transform
 
