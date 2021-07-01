@@ -340,7 +340,7 @@ Resources:
                   - Ref: pEnvironment
                   - DBName
               DBInstanceIdentifier: 
-                Fn::Join: [ "-", [Ref: pImportBase, "-sfg-rds-eks"] ]
+                Fn::Join: [ "-", [Ref: pImportBase, "sfg-rds-eks"] ]
               DBSubnetGroupName: 
                 Ref: rSubnetGroupRDS
               AllowMajorVersionUpgrade: true
@@ -422,7 +422,7 @@ Resources:
                 - BackupRetentionPeriod
               Tags: 
                 - Key: Name
-                  Value: !Join ["", [!Ref 'pImportBase',"-sfg-rds-eks"]]
+                  Value: !Join ["", [!Ref 'pImportBase',"sfg-rds-eks"]]
 
           # DB 
           DBParamGroupRDS:
