@@ -191,6 +191,58 @@ Resources:
     ## Segmento Privado EKS
     ############################################################################################################
 
+        # Security Groups efs
+          rEFSSG:
+            Type: AWS::EC2::SecurityGroup
+            Properties:
+                GroupName: !Join ["-", [!Ref pImportBase, "sfg-efs"]]
+                GroupDescription: Allow NFS to EFS
+                VpcId: !Ref DefaultVPCId
+                SecurityGroupIngress:
+                  - Description: File systema access
+                    IpProtocol: tcp
+                    FromPort: 2049
+                    ToPort: 2049
+                    CidrIp: 0.0.0.0/0
+          #            SourceSecurityGroupId: 
+          #              Fn::Join: ['',['{{resolve:ssm:',!Sub '${pImportBase}-sfg-ec2-sgid}}']]
+        
+        # Resources EFS
+          pFileSystemResource:
+              Type: 'AWS::EFS::FileSystem'
+              Properties:
+                  BackupPolicy:
+                    Status: ENABLED
+                  PerformanceMode: maxIO
+                  ThroughputMode: bursting
+                  Encrypted: true
+                  LifecyclePolicies:
+                    - TransitionToIA: AFTER_30_DAYS
+                  FileSystemTags:
+                    - Key: Name
+                      Value: TestFileSystem
+              #    KmsKeyId: !GetAtt 
+              #      - rEFSkey
+              #     - Arn
+
+        # Mountain Target para subnet privada 3
+          MountTargetResource1:
+            Type: AWS::EFS::MountTarget
+            Properties:
+              FileSystemId: !Ref pFileSystemResource
+              SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet3] 
+              SecurityGroups: 
+                - !Ref rEFSSG
+
+        # Mountain Target para subnet privada 4
+          MountTargetResource2:
+            Type: AWS::EFS::MountTarget
+            Properties:
+                FileSystemId: !Ref pFileSystemResource
+                SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet4]
+                SecurityGroups: 
+                  - !Ref rEFSSG
+
       ############################################################################################################
       # Segmento Private A EC2
       #################################### EC2
