@@ -191,23 +191,23 @@ Resources:
     ## Segmento Privado EKS
     ############################################################################################################
 
-        # Security Groups efs
-          rEFSSG:
-            Type: AWS::EC2::SecurityGroup
-            Properties:
-                GroupName: !Join ["-", [!Ref pImportBase, "sfg-efs"]]
-                GroupDescription: Allow NFS to EFS
-                VpcId: !Ref DefaultVPCId
-                SecurityGroupIngress:
-                  - Description: File systema access
-                    IpProtocol: tcp
-                    FromPort: 2049
-                    ToPort: 2049
-                    CidrIp: 0.0.0.0/0
-          #            SourceSecurityGroupId: 
-          #              Fn::Join: ['',['{{resolve:ssm:',!Sub '${pImportBase}-sfg-ec2-sgid}}']]
+        ##  sg para efs
+          rSecurityGroupEKSEFS:
+              Type: AWS::EC2::SecurityGroup
+              Properties:
+                  GroupName: !Join ["-", [!Ref pImportBase, "sfg-efs-eks"]]
+                  GroupDescription: Allow NFS to EFS
+                  VpcId: !Ref DefaultVPCId
+                  SecurityGroupIngress:
+                    - Description: File systema access
+                      IpProtocol: tcp
+                      FromPort: 2049
+                      ToPort: 2049
+                      CidrIp: 0.0.0.0/0
+            #            SourceSecurityGroupId: 
+            #              Fn::Join: ['',['{{resolve:ssm:',!Sub '${pImportBase}-sfg-ec2-sgid}}']]
         
-        # Resources EFS
+        ##  EFS
           pFileSystemResource:
               Type: 'AWS::EFS::FileSystem'
               Properties:
@@ -225,23 +225,22 @@ Resources:
               #      - rEFSkey
               #     - Arn
 
-        # Mountain Target para subnet privada 3
-          MountTargetResource1:
+        ##  Mountain Target para subnet privada 3
+          MountTargetEKSResource1:
             Type: AWS::EFS::MountTarget
             Properties:
               FileSystemId: !Ref pFileSystemResource
               SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet3] 
               SecurityGroups: 
-                - !Ref rEFSSG
-
-        # Mountain Target para subnet privada 4
-          MountTargetResource2:
+                - !Ref rSecurityGroupEKSEFS
+        ##  Mountain Target para subnet privada 4
+          MountTargetEKSResource2:
             Type: AWS::EFS::MountTarget
             Properties:
                 FileSystemId: !Ref pFileSystemResource
                 SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet4]
                 SecurityGroups: 
-                  - !Ref rEFSSG
+                  - !Ref rSecurityGroupEKSEFS
 
       ############################################################################################################
       # Segmento Private A EC2
@@ -335,7 +334,7 @@ Resources:
                   - Ref: pEnvironment
                   - DBName
               DBInstanceIdentifier: 
-                Fn::Join: [ "-", [Ref: pImportBase, "sfg-rds"] ]
+                Fn::Join: [ "-", [Ref: pImportBase, "sfg-rds-eks"] ]
               DBSubnetGroupName: 
                 Ref: rSubnetGroupRDS
               AllowMajorVersionUpgrade: true
