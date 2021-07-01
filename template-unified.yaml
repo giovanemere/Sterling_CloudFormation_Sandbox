@@ -1,6 +1,6 @@
 ############################# Template y Description
 AWSTemplateFormatVersion: 2010-09-09
-Description: Creacion Ec2 para servicio sanbox
+Description: Creacion Ec2 para servicio sandbox
 
 ############################## Metadata
 
@@ -86,7 +86,7 @@ Parameters:
 ############################## Mappings  
 Mappings:
 
-  # EC2 Sterling
+  # EC2
     mSterling:
       dev: 
         InstanceType: "t2.micro"          
@@ -140,19 +140,19 @@ Resources:
       #################################### EC2
 
         # Security Groups
-          rSecurityGroupEc2Public: 
+          rSecurityGroupEc2PublicA: 
             Type: AWS::EC2::SecurityGroup
             Properties:
-              GroupName: !Join ["",[!Ref 'AWS::StackName', "sg-public"]] 
-              GroupDescription: security group para el EC2
+              GroupName: !Join ["",[!Ref 'AWS::StackName', "-sg-public-A"]] 
+              GroupDescription: security group para el EC2 A
               SecurityGroupIngress:  
                 - IpProtocol: "-1"
                   CidrIp: 0.0.0.0/0
-                  Description: Allow access to the EC2 APP from Public
+                  Description: Allow access to the EC2 APP from Public A
               VpcId: !Ref DefaultVPCId
               Tags:
                 - Key: Name
-                  Value: !Join ["",[!Ref 'AWS::StackName', "sg-public"]]
+                  Value: !Join ["",[!Ref 'AWS::StackName', "-sg-public-A"]]
 
         # Instancia Perimeter
           rEc2PSNodo1:
@@ -161,29 +161,39 @@ Resources:
             Properties:
               DisableApiTermination: !FindInMap [mSterling, !Ref pEnvironment, DisableApiTermination]
               SecurityGroupIds:
-                - !Ref rSecurityGroupEc2Public
+                - !Ref rSecurityGroupEc2PublicA
               SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet1]  # >> Pilas Subnet 1
               Monitoring: True
               InstanceType: !FindInMap [mSterling, !Ref pEnvironment, InstanceType]
               ImageId: !FindInMap [mSterling, !Ref pEnvironment, ImageId]
               # IamInstanceProfile: !Ref rEC2InstanceProfileSFG
-              Tags:
-                - Key: Name
-                  Value: !Join ["", [!Ref 'pImportBase',"ec2-ps-nodo1"]]   
               BlockDeviceMappings:
                 - DeviceName: /dev/sda1
                   Ebs:
                     VolumeSize: !FindInMap [mSterling, !Ref pEnvironment, EbsVolumeSize]
               KeyName: !Ref myKeyPair
-              #UserData:
-              # 
-              # Nombre de la maquina h
+              Tags:
+                - Key: Name
+                  Value: !Join ["", [!Ref 'pImportBase',"-ec2-ps-nodo1"]]
 
       ############################################################################################################
       # Segmento Publico B
       #################################### EC2
 
         # Security Groups
+          rSecurityGroupEc2PublicB: 
+            Type: AWS::EC2::SecurityGroup
+            Properties:
+              GroupName: !Join ["",[!Ref 'AWS::StackName', "-sg-public-B"]] 
+              GroupDescription: security group para el EC2 segmento B
+              SecurityGroupIngress:  
+                - IpProtocol: "-1"
+                  CidrIp: 0.0.0.0/0
+                  Description: Allow access to the EC2 APP from Public B
+              VpcId: !Ref DefaultVPCId
+              Tags:
+                - Key: Name
+                  Value: !Join ["",[!Ref 'AWS::StackName', "-sg-public-B"]]
 
         # Instancia Perimeter
 
@@ -191,41 +201,39 @@ Resources:
     ## Segmento Privado EKS
     ############################################################################################################
 
-        ##  sg para efs
+      #############################################################################
+      # EFS
+      #############################################################################
+
+        # Security Groups efs
           rSecurityGroupEKSEFS:
-              Type: AWS::EC2::SecurityGroup
-              Properties:
-                  GroupName: !Join ["-", [!Ref pImportBase, "sfg-efs-eks"]]
-                  GroupDescription: Allow NFS to EFS
-                  VpcId: !Ref DefaultVPCId
-                  SecurityGroupIngress:
-                    - Description: File systema access
-                      IpProtocol: tcp
-                      FromPort: 2049
-                      ToPort: 2049
-                      CidrIp: 0.0.0.0/0
+            Type: AWS::EC2::SecurityGroup
+            Properties:
+              GroupName: !Join ["-", [!Ref pImportBase, "-sfg-efs-eks"]]
+              GroupDescription: Allow NFS to EFS
+              VpcId: !Ref DefaultVPCId
+              SecurityGroupIngress:
+                - Description: File systema access
+                  IpProtocol: tcp
+                  FromPort: 2049
+                  ToPort: 2049
+                  CidrIp: 192.168.0.0/16
+              Tags:
+                - Key: Name
+                  Value: !Join ["",[!Ref 'AWS::StackName', "-sfg-efs-eks"]]
             #            SourceSecurityGroupId: 
             #              Fn::Join: ['',['{{resolve:ssm:',!Sub '${pImportBase}-sfg-ec2-sgid}}']]
         
-        ##  EFS
+        # Resource EFS
           pFileSystemResource:
-              Type: 'AWS::EFS::FileSystem'
-              Properties:
-                  BackupPolicy:
-                    Status: ENABLED
-                  PerformanceMode: maxIO
-                  ThroughputMode: bursting
-                  Encrypted: true
-                  LifecyclePolicies:
-                    - TransitionToIA: AFTER_30_DAYS
-                  FileSystemTags:
-                    - Key: Name
-                      Value: TestFileSystem
-              #    KmsKeyId: !GetAtt 
-              #      - rEFSkey
-              #     - Arn
+            Type: 'AWS::EFS::FileSystem'
+            Properties:
+              PerformanceMode: maxIO
+              FileSystemTags:
+                - Key: Name
+                  Value: EKSFileSystem
 
-        ##  Mountain Target para subnet privada 3
+        # Mountain Target para subnet privada 3
           MountTargetEKSResource1:
             Type: AWS::EFS::MountTarget
             Properties:
@@ -233,7 +241,8 @@ Resources:
               SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet3] 
               SecurityGroups: 
                 - !Ref rSecurityGroupEKSEFS
-        ##  Mountain Target para subnet privada 4
+
+        # Mountain Target para subnet privada 4
           MountTargetEKSResource2:
             Type: AWS::EFS::MountTarget
             Properties:
@@ -244,13 +253,14 @@ Resources:
 
       ############################################################################################################
       # Segmento Private A EC2
-      #################################### EC2
+      
+      # EC2
 
         # Security Groups EC2
           rSecurityGroupEc2Private: 
             Type: AWS::EC2::SecurityGroup
             Properties:
-              GroupName: !Join ["",[!Ref 'AWS::StackName', "sg-private-EKS"]] 
+              GroupName: !Join ["",[!Ref 'AWS::StackName', "-sg-private"]] 
               GroupDescription: security group para el EC2
               SecurityGroupIngress:  
                 - IpProtocol: tcp
@@ -261,7 +271,7 @@ Resources:
               VpcId: !Ref DefaultVPCId 
               Tags:
                 - Key: Name
-                  Value: !Join ["",[!Ref 'AWS::StackName', "sg-private-EKS"]]
+                  Value: !Join ["",[!Ref 'AWS::StackName', "-sg-private"]]
 
         # Instancia Sterling Nodo1 
           rEc2SterlingNodo1:
@@ -273,18 +283,15 @@ Resources:
               SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet3]  # >> Pilas Subnet 1 
               Monitoring: True
               InstanceType: !FindInMap [mSterling, !Ref pEnvironment, InstanceType]
-              ImageId: !FindInMap [mSterling, !Ref pEnvironment, ImageId]
-              Tags:
-                - Key: Name
-                  Value: !Join ["", [!Ref 'pImportBase',"ec2-sfg-nodo1"]]  
+              ImageId: !FindInMap [mSterling, !Ref pEnvironment, ImageId]  
               BlockDeviceMappings:
                 - DeviceName: /dev/sda1
                   Ebs:
                     VolumeSize: !FindInMap [mSterling, !Ref pEnvironment, EbsVolumeSize]
               KeyName: !Ref myKeyPair
-              #UserData:
-              # 
-              # Nombre de la maquina
+              Tags:
+                - Key: Name
+                  Value: !Join ["", [!Ref 'pImportBase',"-ec2-sfg-nodo1"]]
 
       ############################################################################################################
       # Segmento Private B Database
@@ -305,12 +312,11 @@ Resources:
                   Value: 
                     Fn::Join: ["-", [Ref: 'AWS::StackName' , "subnetgroup"]]
 
-
         # Secuirty Group RDS 
           rDBSecurityGroupsDBA: 
             Type: AWS::EC2::SecurityGroup
             Properties:
-              GroupName: !Join ["",[!Ref 'AWS::StackName', "sg-private-DB"]] 
+              GroupName: !Join ["",[!Ref 'AWS::StackName', "-sg-private-DB"]] 
               GroupDescription: Grupo de securidad para la instancia de base de datos.
               SecurityGroupIngress:  
                 - IpProtocol: tcp
@@ -321,7 +327,7 @@ Resources:
               VpcId: !Ref DefaultVPCId 
               Tags:
                 - Key: Name
-                  Value: !Join ["",[!Ref 'AWS::StackName', "sg-private-DB"]]
+                  Value: !Join ["",[!Ref 'AWS::StackName', "-sg-private-DB"]]
 
         # Instance RDS
           rDataBases:
@@ -334,14 +340,12 @@ Resources:
                   - Ref: pEnvironment
                   - DBName
               DBInstanceIdentifier: 
-                Fn::Join: [ "-", [Ref: pImportBase, "sfg-rds-eks"] ]
+                Fn::Join: [ "-", [Ref: pImportBase, "-sfg-rds-eks"] ]
               DBSubnetGroupName: 
                 Ref: rSubnetGroupRDS
               AllowMajorVersionUpgrade: true
               VPCSecurityGroups: 
                 - Ref: rDBSecurityGroupsDBA
-                #- Fn::ImportValue: 
-                #    Fn::Sub: 'aw0000-database-${pEnvironment}-stack-sg-transversal'
               AllocatedStorage:
                 Fn::FindInMap:
                 - Ref: pDataBase
@@ -379,9 +383,6 @@ Resources:
                 - Ref: pDataBase
                 - Ref: pEnvironment
                 - port
-              #KmsKeyId: 
-                #Ref: rKmsKeyRDS
-                #Fn::Join: ["", ["{{resolve:ssm:", Ref: pImportBase, "-rds-kms-key:1}}"]]
               CharacterSetName: 
                 Ref: pCharacterSetName
               MultiAZ: 
@@ -396,10 +397,6 @@ Resources:
                 - EnableCloudwatchLogsExports
               MasterUsername: !Ref 'pDBUsername'
               MasterUserPassword: !Ref 'pDBPassword'
-              #MasterUsername:
-              #  Fn::Join: ['', ['{{resolve:secretsmanager:', Ref: rSecretAdminRDS, ':SecretString:username}}' ]]
-              #MasterUserPassword:
-              #  Fn::Join: ['', ['{{resolve:secretsmanager:', Ref: rSecretAdminRDS, ':SecretString:password}}' ]]
               PreferredBackupWindow:
                 Fn::FindInMap:
                 - Ref: pDataBase
@@ -424,8 +421,8 @@ Resources:
                 - Ref: pEnvironment
                 - BackupRetentionPeriod
               Tags: 
-                - Key: "bancolombia:eks"
-                  Value: "rds"
+                - Key: Name
+                  Value: !Join ["", [!Ref 'pImportBase',"-sfg-rds-eks"]]
 
           # DB 
           DBParamGroupRDS:
