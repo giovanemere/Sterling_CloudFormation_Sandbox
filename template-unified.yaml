@@ -90,7 +90,8 @@ Mappings:
     mSterling:
       dev: 
         InstanceType: "t2.xlarge"          
-        ImageId: "ami-09d01d46812c52d7d" #Red Hat Enterprise Linux 8 
+        #ImageId: "ami-09d01d46812c52d7d" #Red Hat Enterprise Linux 8 EKS No funciona
+        ImageId: "ami-0b0af3577fe5e3532" #Red Hat Enterprise Linux 8 
         EbsVolumeSize: 10
         DisableApiTermination: "false"
         Subnet1: "subnet-03537d0e8b9cfae20" #mft-public-A 1
@@ -251,11 +252,11 @@ Resources:
             Properties:
               DisableApiTermination: !FindInMap [mSterling, !Ref pEnvironment, DisableApiTermination]
               SecurityGroupIds:
-                - !Ref rSecurityGroupEc2Private     
-              SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet3]  # >> Pilas Subnet 1 
+                - !Ref rSecurityGroupEc2Private
+              SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet3]
               Monitoring: True
               InstanceType: !FindInMap [mSterling, !Ref pEnvironment, InstanceType]
-              ImageId: !FindInMap [mSterling, !Ref pEnvironment, ImageId]  
+              ImageId: !FindInMap [mSterling, !Ref pEnvironment, ImageId]
               BlockDeviceMappings:
                 - DeviceName: /dev/sda1
                   Ebs:
@@ -268,16 +269,14 @@ Resources:
         # Instancia EKS Nodo2
           rEc2EKSNodo2:
             Type: AWS::EC2::Instance
-            # Condition: envNoDev  # >> depende del ambiente
             Properties:
               DisableApiTermination: !FindInMap [mSterling, !Ref pEnvironment, DisableApiTermination]
               SecurityGroupIds:
                 - !Ref rSecurityGroupEc2Private
-              SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet3]  # >> Pilas Subnet 1
+              SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet3]
               Monitoring: True
               InstanceType: !FindInMap [mSterling, !Ref pEnvironment, InstanceType]
               ImageId: !FindInMap [mSterling, !Ref pEnvironment, ImageId]
-              # IamInstanceProfile: !Ref rEC2InstanceProfileSFG
               BlockDeviceMappings:
                 - DeviceName: /dev/sda1
                   Ebs:
