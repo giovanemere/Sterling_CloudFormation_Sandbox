@@ -32,7 +32,7 @@ Parameters:
     Subnets:
       Description: he list of SubnetIds, for at least two Availability Zones in the region in your Virtual Private Cloud (VPC)
       Type: CommaDelimitedList
-      Default: subnet-0ba2b4e5b1fcffac7,subnet-0f2f5b594e51d0623
+      Default: subnet-0ba2b4e5b1fcffac7, subnet-0f2f5b594e51d0623
 
   # KeyPair
     myKeyPair: 
@@ -126,7 +126,7 @@ Mappings:
 
 ############################## Conditions
 Conditions:
-  envNoDev: !Not [ !Equals [Ref: pEnvironment, "dev"]] 
+  envDev: !Not [ !Equals [Ref: pEnvironment, "dev"]] 
 
 ############################## Resources  
 Resources:
@@ -143,7 +143,7 @@ Resources:
           rSecurityGroupEc2PublicA: 
             Type: AWS::EC2::SecurityGroup
             Properties:
-              GroupName: !Join ["",[!Ref 'AWS::StackName', "-sg-public-A"]] 
+              GroupName: !Join ["",[!Ref 'AWS::StackName', "sg-eks-public-A"]] 
               GroupDescription: security group para el EC2 A
               SecurityGroupIngress:  
                 - IpProtocol: "-1"
@@ -152,7 +152,7 @@ Resources:
               VpcId: !Ref DefaultVPCId
               Tags:
                 - Key: Name
-                  Value: !Join ["",[!Ref 'AWS::StackName', "-sg-public-A"]]
+                  Value: !Join ["",[!Ref 'AWS::StackName', "sg-eks-public-A"]]
 
         # Instancia Perimeter
           rEc2PSNodo1:
@@ -174,7 +174,7 @@ Resources:
               KeyName: !Ref myKeyPair
               Tags:
                 - Key: Name
-                  Value: !Join ["", [!Ref 'pImportBase',"-ec2-ps-nodo1"]]
+                  Value: !Join ["", [!Ref 'pImportBase',"ec2-eks-ps-nodo1"]]
 
       ############################################################################################################
       # Segmento Publico B
@@ -184,7 +184,7 @@ Resources:
           rSecurityGroupEc2PublicB: 
             Type: AWS::EC2::SecurityGroup
             Properties:
-              GroupName: !Join ["",[!Ref 'AWS::StackName', "-sg-public-B"]] 
+              GroupName: !Join ["",[!Ref 'AWS::StackName', "sg-eks-public-B"]] 
               GroupDescription: security group para el EC2 segmento B
               SecurityGroupIngress:  
                 - IpProtocol: "-1"
@@ -193,7 +193,7 @@ Resources:
               VpcId: !Ref DefaultVPCId
               Tags:
                 - Key: Name
-                  Value: !Join ["",[!Ref 'AWS::StackName', "-sg-public-B"]]
+                  Value: !Join ["",[!Ref 'AWS::StackName', "sg-eks-public-B"]]
 
         # Instancia Perimeter
 
@@ -209,7 +209,7 @@ Resources:
           rSecurityGroupEKSEFS:
             Type: AWS::EC2::SecurityGroup
             Properties:
-              GroupName: !Join ["-", [!Ref pImportBase, "-sfg-efs-eks"]]
+              GroupName: !Join ["-", [!Ref pImportBase, "sfg-eks-efs-eks"]]
               GroupDescription: Allow NFS to EFS
               VpcId: !Ref DefaultVPCId
               SecurityGroupIngress:
@@ -217,36 +217,33 @@ Resources:
                   IpProtocol: tcp
                   FromPort: 2049
                   ToPort: 2049
-                  CidrIp: 192.168.0.0/16
+                  CidrIp: 0.0.0.0/16
               Tags:
                 - Key: Name
-                  Value: !Join ["",[!Ref 'AWS::StackName', "-sfg-efs-eks"]]
-            #            SourceSecurityGroupId: 
-            #              Fn::Join: ['',['{{resolve:ssm:',!Sub '${pImportBase}-sfg-ec2-sgid}}']]
-        
+                  Value: !Join ["",[!Ref 'AWS::StackName', "sfg-eks-efs-eks"]]
+
         # Resource EFS
-          pFileSystemResource:
+          rFileSystemResource:
             Type: 'AWS::EFS::FileSystem'
             Properties:
-              PerformanceMode: maxIO
               FileSystemTags:
                 - Key: Name
-                  Value: EKSFileSystem
+                  Value: rEKSFileSystem
 
         # Mountain Target para subnet privada 3
-          MountTargetEKSResource1:
+          rMountTargetEKS1:
             Type: AWS::EFS::MountTarget
             Properties:
-              FileSystemId: !Ref pFileSystemResource
-              SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet3] 
+              FileSystemId: !Ref rFileSystemResource
+              SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet2] 
               SecurityGroups: 
                 - !Ref rSecurityGroupEKSEFS
 
         # Mountain Target para subnet privada 4
-          MountTargetEKSResource2:
+          rMountTargetEKS2:
             Type: AWS::EFS::MountTarget
             Properties:
-                FileSystemId: !Ref pFileSystemResource
+                FileSystemId: !Ref rFileSystemResource
                 SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet4]
                 SecurityGroups: 
                   - !Ref rSecurityGroupEKSEFS
@@ -260,7 +257,7 @@ Resources:
           rSecurityGroupEc2Private: 
             Type: AWS::EC2::SecurityGroup
             Properties:
-              GroupName: !Join ["",[!Ref 'AWS::StackName', "-sg-private"]] 
+              GroupName: !Join ["",[!Ref 'AWS::StackName', "sg-eks-private"]] 
               GroupDescription: security group para el EC2
               SecurityGroupIngress:  
                 - IpProtocol: tcp
@@ -271,7 +268,7 @@ Resources:
               VpcId: !Ref DefaultVPCId 
               Tags:
                 - Key: Name
-                  Value: !Join ["",[!Ref 'AWS::StackName', "-sg-private"]]
+                  Value: !Join ["",[!Ref 'AWS::StackName', "sg-eks-private"]]
 
         # Instancia Sterling Nodo1 
           rEc2SterlingNodo1:
@@ -291,7 +288,7 @@ Resources:
               KeyName: !Ref myKeyPair
               Tags:
                 - Key: Name
-                  Value: !Join ["", [!Ref 'pImportBase',"-ec2-sfg-nodo1"]]
+                  Value: !Join ["", [!Ref 'pImportBase',"ec2-eks-sfg-nodo1"]]
 
       ############################################################################################################
       # Segmento Private B Database
@@ -302,21 +299,21 @@ Resources:
             Type: AWS::RDS::DBSubnetGroup
             Properties:
               DBSubnetGroupDescription: 
-                Fn::Join: ["-", [Ref: 'AWS::StackName' , "subnetgroup"]]
+                Fn::Join: ["-", [Ref: 'AWS::StackName' , "ni-eks-subgroups"]]
               DBSubnetGroupName: 
-                Fn::Join: ["-", [Ref: 'AWS::StackName' , "subnetgroup"]]
+                Fn::Join: ["-", [Ref: 'AWS::StackName' , "ni-eks-subgroups"]]
               SubnetIds:
                   Ref: Subnets
               Tags:
                 - Key: Name
                   Value: 
-                    Fn::Join: ["-", [Ref: 'AWS::StackName' , "subnetgroup"]]
+                    Fn::Join: ["-", [Ref: 'AWS::StackName' , "ni-eks-subgroups"]]
 
         # Secuirty Group RDS 
           rDBSecurityGroupsDBA: 
             Type: AWS::EC2::SecurityGroup
             Properties:
-              GroupName: !Join ["",[!Ref 'AWS::StackName', "-sg-private-DB"]] 
+              GroupName: !Join ["",[!Ref 'AWS::StackName', "sg-eks-private-DB"]] 
               GroupDescription: Grupo de securidad para la instancia de base de datos.
               SecurityGroupIngress:  
                 - IpProtocol: tcp
@@ -327,7 +324,7 @@ Resources:
               VpcId: !Ref DefaultVPCId 
               Tags:
                 - Key: Name
-                  Value: !Join ["",[!Ref 'AWS::StackName', "-sg-private-DB"]]
+                  Value: !Join ["",[!Ref 'AWS::StackName', "sg-eks-private-DB"]]
 
         # Instance RDS
           rDataBases:
@@ -340,7 +337,7 @@ Resources:
                   - Ref: pEnvironment
                   - DBName
               DBInstanceIdentifier: 
-                Fn::Join: [ "-", [Ref: pImportBase, "sfg-rds-eks"] ]
+                Fn::Join: [ "-", [Ref: pImportBase, "sfg-eks-rds"] ]
               DBSubnetGroupName: 
                 Ref: rSubnetGroupRDS
               AllowMajorVersionUpgrade: true
@@ -402,7 +399,7 @@ Resources:
                 - Ref: pDataBase
                 - Ref: pEnvironment
                 - PreferredBackupWindow
-              DBParameterGroupName: !Ref DBParamGroupRDS
+              DBParameterGroupName: !Ref rDBParamGroupRDS
               StorageEncrypted: true
               AutoMinorVersionUpgrade: true
               EnablePerformanceInsights: true
@@ -422,10 +419,10 @@ Resources:
                 - BackupRetentionPeriod
               Tags: 
                 - Key: Name
-                  Value: !Join ["", [!Ref 'pImportBase',"sfg-rds-eks"]]
+                  Value: !Join ["", [!Ref 'pImportBase',"sfg-eks-rds"]]
 
-          # DB 
-          DBParamGroupRDS:
+          # Param Groups 
+          rDBParamGroupRDS:
             Type: AWS::RDS::DBParameterGroup
             Properties:
               Family: oracle-ee-19
