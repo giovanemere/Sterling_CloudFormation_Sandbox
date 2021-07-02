@@ -89,10 +89,9 @@ Mappings:
   # EC2
     mSterling:
       dev: 
-        InstanceType: "t2.micro"          
-        ImageId: "ami-0b0af3577fe5e3532" #Red Hat Enterprise Linux 8 
+        InstanceType: "t2.xlarge"          
+        ImageId: "ami-09d01d46812c52d7d" #Red Hat Enterprise Linux 8 
         EbsVolumeSize: 10
-        EbsVolumeSize2: 10
         DisableApiTermination: "false"
         Subnet1: "subnet-03537d0e8b9cfae20" #mft-public-A 1
         Subnet2: "subnet-0ba2b4e5b1fcffac7" #mft-public-B 1
@@ -140,60 +139,38 @@ Resources:
       #################################### EC2
 
         # Security Groups
-          rSecurityGroupEc2PublicA: 
-            Type: AWS::EC2::SecurityGroup
-            Properties:
-              GroupName: !Join ["",[!Ref 'AWS::StackName', "sg-eks-public-A"]] 
-              GroupDescription: security group para el EC2 A
-              SecurityGroupIngress:  
-                - IpProtocol: "-1"
-                  CidrIp: 0.0.0.0/0
-                  Description: Allow access to the EC2 APP from Public A
-              VpcId: !Ref DefaultVPCId
-              Tags:
-                - Key: Name
-                  Value: !Join ["",[!Ref 'AWS::StackName', "sg-eks-public-A"]]
-
-        # Instancia Perimeter
-          rEc2PSNodo1:
-            Type: AWS::EC2::Instance
-            # Condition: envNoDev  # >> depende del ambiente
-            Properties:
-              DisableApiTermination: !FindInMap [mSterling, !Ref pEnvironment, DisableApiTermination]
-              SecurityGroupIds:
-                - !Ref rSecurityGroupEc2PublicA
-              SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet1]  # >> Pilas Subnet 1
-              Monitoring: True
-              InstanceType: !FindInMap [mSterling, !Ref pEnvironment, InstanceType]
-              ImageId: !FindInMap [mSterling, !Ref pEnvironment, ImageId]
-              # IamInstanceProfile: !Ref rEC2InstanceProfileSFG
-              BlockDeviceMappings:
-                - DeviceName: /dev/sda1
-                  Ebs:
-                    VolumeSize: !FindInMap [mSterling, !Ref pEnvironment, EbsVolumeSize]
-              KeyName: !Ref myKeyPair
-              Tags:
-                - Key: Name
-                  Value: !Join ["", [!Ref 'pImportBase',"ec2-eks-ps-nodo1"]]
+          # rSecurityGroupEc2PublicA: 
+          #   Type: AWS::EC2::SecurityGroup
+          #   Properties:
+          #     GroupName: !Join ["",[!Ref 'AWS::StackName', "sg-eks-public-A"]] 
+          #     GroupDescription: security group para el EC2 A
+          #     SecurityGroupIngress:  
+          #       - IpProtocol: "-1"
+          #         CidrIp: 0.0.0.0/0
+          #         Description: Allow access to the EC2 APP from Public A
+          #     VpcId: !Ref DefaultVPCId
+          #     Tags:
+          #       - Key: Name
+          #         Value: !Join ["",[!Ref 'AWS::StackName', "sg-eks-public-A"]]
 
       ############################################################################################################
       # Segmento Publico B
       #################################### EC2
 
         # Security Groups
-          rSecurityGroupEc2PublicB: 
-            Type: AWS::EC2::SecurityGroup
-            Properties:
-              GroupName: !Join ["",[!Ref 'AWS::StackName', "sg-eks-public-B"]] 
-              GroupDescription: security group para el EC2 segmento B
-              SecurityGroupIngress:  
-                - IpProtocol: "-1"
-                  CidrIp: 0.0.0.0/0
-                  Description: Allow access to the EC2 APP from Public B
-              VpcId: !Ref DefaultVPCId
-              Tags:
-                - Key: Name
-                  Value: !Join ["",[!Ref 'AWS::StackName', "sg-eks-public-B"]]
+          # rSecurityGroupEc2PublicB: 
+          #   Type: AWS::EC2::SecurityGroup
+          #   Properties:
+          #     GroupName: !Join ["",[!Ref 'AWS::StackName', "sg-eks-public-B"]] 
+          #     GroupDescription: security group para el EC2 segmento B
+          #     SecurityGroupIngress:  
+          #       - IpProtocol: "-1"
+          #         CidrIp: 0.0.0.0/0
+          #         Description: Allow access to the EC2 APP from Public B
+          #     VpcId: !Ref DefaultVPCId
+          #     Tags:
+          #       - Key: Name
+          #         Value: !Join ["",[!Ref 'AWS::StackName', "sg-eks-public-B"]]
 
         # Instancia Perimeter
 
@@ -206,7 +183,7 @@ Resources:
       #############################################################################
 
         # Security Groups efs
-          rSecurityGroupEKSEFS:
+          rSecurityGroupEksEFS:
             Type: AWS::EC2::SecurityGroup
             Properties:
               GroupName: !Join ["-", [!Ref pImportBase, "sfg-eks-efs-eks"]]
@@ -237,7 +214,7 @@ Resources:
               FileSystemId: !Ref rFileSystemResource
               SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet2] 
               SecurityGroups: 
-                - !Ref rSecurityGroupEKSEFS
+                - !Ref rSecurityGroupEksEFS
 
         # Mountain Target para subnet privada 4
           rMountTargetEKS2:
@@ -246,7 +223,7 @@ Resources:
                 FileSystemId: !Ref rFileSystemResource
                 SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet4]
                 SecurityGroups: 
-                  - !Ref rSecurityGroupEKSEFS
+                  - !Ref rSecurityGroupEksEFS
 
       ############################################################################################################
       # Segmento Private A EC2
@@ -260,9 +237,7 @@ Resources:
               GroupName: !Join ["",[!Ref 'AWS::StackName', "sg-eks-private"]] 
               GroupDescription: security group para el EC2
               SecurityGroupIngress:  
-                - IpProtocol: tcp
-                  FromPort: 22
-                  ToPort: 22
+                - IpProtocol: "-1"
                   CidrIp: 0.0.0.0/0
                   Description: Allow access to the EC2 APP from Subnet Private   
               VpcId: !Ref DefaultVPCId 
@@ -270,8 +245,8 @@ Resources:
                 - Key: Name
                   Value: !Join ["",[!Ref 'AWS::StackName', "sg-eks-private"]]
 
-        # Instancia Sterling Nodo1 
-          rEc2SterlingNodo1:
+        # Instancia EKS Nodo1 
+          rEc2EKSNodo1:
             Type: AWS::EC2::Instance
             Properties:
               DisableApiTermination: !FindInMap [mSterling, !Ref pEnvironment, DisableApiTermination]
@@ -288,8 +263,30 @@ Resources:
               KeyName: !Ref myKeyPair
               Tags:
                 - Key: Name
-                  Value: !Join ["", [!Ref 'pImportBase',"ec2-eks-sfg-nodo1"]]
+                  Value: !Join ["", [!Ref 'pImportBase',"ec2-eks-nodo1"]]
 
+        # Instancia EKS Nodo2
+          rEc2EKSNodo2:
+            Type: AWS::EC2::Instance
+            # Condition: envNoDev  # >> depende del ambiente
+            Properties:
+              DisableApiTermination: !FindInMap [mSterling, !Ref pEnvironment, DisableApiTermination]
+              SecurityGroupIds:
+                - !Ref rSecurityGroupEc2Private
+              SubnetId: !FindInMap [mSterling, !Ref pEnvironment, Subnet3]  # >> Pilas Subnet 1
+              Monitoring: True
+              InstanceType: !FindInMap [mSterling, !Ref pEnvironment, InstanceType]
+              ImageId: !FindInMap [mSterling, !Ref pEnvironment, ImageId]
+              # IamInstanceProfile: !Ref rEC2InstanceProfileSFG
+              BlockDeviceMappings:
+                - DeviceName: /dev/sda1
+                  Ebs:
+                    VolumeSize: !FindInMap [mSterling, !Ref pEnvironment, EbsVolumeSize]
+              KeyName: !Ref myKeyPair
+              Tags:
+                - Key: Name
+                  Value: !Join ["", [!Ref 'pImportBase',"ec2-eks-nodo2"]]
+                  
       ############################################################################################################
       # Segmento Private B Database
       #################################### Database
