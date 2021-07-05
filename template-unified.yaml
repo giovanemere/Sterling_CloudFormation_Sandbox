@@ -187,7 +187,7 @@ Resources:
           rSecurityGroupEksEFS:
             Type: AWS::EC2::SecurityGroup
             Properties:
-              GroupName: !Join ["-", [!Ref pImportBase, "sfg-eks-efs-eks"]]
+              GroupName: !Join ["-", [!Ref pImportBase, "sfg-eks-efs"]]
               GroupDescription: Allow NFS to EFS
               VpcId: !Ref DefaultVPCId
               SecurityGroupIngress:
@@ -198,7 +198,7 @@ Resources:
                   CidrIp: 0.0.0.0/16
               Tags:
                 - Key: Name
-                  Value: !Join ["",[!Ref 'AWS::StackName', "sfg-eks-efs-eks"]]
+                  Value: !Join ["",[!Ref 'AWS::StackName', "sfg-eks-efs"]]
 
         # Resource EFS
           rFileSystemResource:
